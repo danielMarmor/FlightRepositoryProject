@@ -4,7 +4,7 @@ from configparser import ConfigParser
 from root import ROOT_DIR
 import os
 
-
+# singelton
 class FlightsLogger:
     _instance = None
 
