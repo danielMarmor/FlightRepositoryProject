@@ -1,0 +1,437 @@
+2022-02-15 20:47:36,661 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2022-02-15 20:47:36,661 INFO sqlalchemy.engine.Engine [raw sql] {}
+2022-02-15 20:47:36,666 INFO sqlalchemy.engine.Engine select current_schema()
+2022-02-15 20:47:36,666 INFO sqlalchemy.engine.Engine [raw sql] {}
+2022-02-15 20:47:36,670 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2022-02-15 20:47:36,671 INFO sqlalchemy.engine.Engine [raw sql] {}
+2022-02-15 20:47:36,672 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2022-02-15 20:47:36,673 INFO sqlalchemy.engine.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2022-02-15 20:47:36,673 INFO sqlalchemy.engine.Engine [generated in 0.00051s] {'name': 'customers'}
+2022-02-15 20:47:36,679 INFO sqlalchemy.engine.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2022-02-15 20:47:36,679 INFO sqlalchemy.engine.Engine [cached since 0.006179s ago] {'name': 'tickets'}
+2022-02-15 20:47:36,680 INFO sqlalchemy.engine.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2022-02-15 20:47:36,680 INFO sqlalchemy.engine.Engine [cached since 0.007409s ago] {'name': 'countries'}
+2022-02-15 20:47:36,681 INFO sqlalchemy.engine.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2022-02-15 20:47:36,681 INFO sqlalchemy.engine.Engine [cached since 0.008584s ago] {'name': 'airine_companies'}
+2022-02-15 20:47:36,682 INFO sqlalchemy.engine.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2022-02-15 20:47:36,682 INFO sqlalchemy.engine.Engine [cached since 0.00965s ago] {'name': 'flights'}
+2022-02-15 20:47:36,683 INFO sqlalchemy.engine.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2022-02-15 20:47:36,684 INFO sqlalchemy.engine.Engine [cached since 0.01071s ago] {'name': 'users'}
+2022-02-15 20:47:36,684 INFO sqlalchemy.engine.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2022-02-15 20:47:36,685 INFO sqlalchemy.engine.Engine [cached since 0.01191s ago] {'name': 'administrators'}
+2022-02-15 20:47:36,686 INFO sqlalchemy.engine.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2022-02-15 20:47:36,686 INFO sqlalchemy.engine.Engine [cached since 0.01335s ago] {'name': 'user_roles'}
+2022-02-15 20:47:36,688 INFO sqlalchemy.engine.Engine COMMIT
+2022-02-15 20:47:36,695 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2022-02-15 20:47:36,695 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_airline_by_username(text);
+CREATE OR REPLACE FUNCTION public.get_airline_by_username(
+	_username text)
+    RETURNS TABLE(id bigint, name character varying, country_id integer, user_id bigint)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+		begin
+			return QUERY
+			select ac.id as id,
+			ac.name as name,
+			ac.country_id as country_id,
+			ac.user_id as user_id
+			from airine_companies ac
+			join users usr on ac.user_id = usr.id
+			where usr.username like _username;
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_airline_by_username(text)
+    OWNER TO postgres;
+2022-02-15 20:47:36,695 INFO sqlalchemy.engine.Engine [generated in 0.00018s] {}
+2022-02-15 20:47:36,751 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_arrival_flights(integer);
+CREATE OR REPLACE FUNCTION public.get_arrival_flights(
+	_country_id integer)
+    RETURNS TABLE(flight_id bigint, airline_company_id bigint, airline_company_name character varying, origin_country_id integer, origin_country_name character varying, destination_country_id integer, dest_country_name character varying, departure_time timestamp without time zone, landing_time timestamp without time zone, remaining_tickets integer)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+
+        declare start_date timestamp without time zone:= current_date;
+		--declare start_date timestamp without time zone:= make_date(2022, 01, 20);
+		declare end_date timestamp without time zone:=start_date + INTERVAL '12 HOUR';
+		begin
+			return QUERY
+			select
+			fli.id flight_id,
+			fli.airline_company_id airline_company_id,
+			ac.name airline_company_name,
+			fli.origin_country_id origin_country_id,
+			co_orig.name origin_country_name,
+			fli.destination_country_id destination_country_id,
+			co_dest.name dest_country_name,
+			fli.departure_time departure_time,
+			fli.landing_time landing_time,
+			fli.remaining_tickets remaining_tickets
+			from
+			flights fli
+			join airine_companies ac on fli.airline_company_id =ac.id
+			join countries co_orig on fli.origin_country_id = co_orig.id
+			join countries co_dest on fli.destination_country_id = co_dest.id
+			where
+			fli.destination_country_id = _country_id
+			and fli.landing_time >=start_date
+			and fli.landing_time  < end_date;
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_arrival_flights(integer)
+    OWNER TO postgres;
+2022-02-15 20:47:36,751 INFO sqlalchemy.engine.Engine [generated in 0.00031s] {}
+2022-02-15 20:47:36,761 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_cusotmer_by_username(text);
+CREATE OR REPLACE FUNCTION public.get_cusotmer_by_username(
+	_username text)
+    RETURNS TABLE(id bigint, first_name character varying, last_name character varying, address character varying, phone_number character varying, credit_card_number character varying, user_id bigint)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+		begin
+			return QUERY
+			select cust.* from customers cust
+			join users usr on cust.user_id = usr.id
+			where usr.username like _username;
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_cusotmer_by_username(text)
+    OWNER TO postgres;
+2022-02-15 20:47:36,761 INFO sqlalchemy.engine.Engine [generated in 0.00025s] {}
+2022-02-15 20:47:36,770 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_departure_flights(integer);
+CREATE OR REPLACE FUNCTION public.get_departure_flights(
+	_country_id integer)
+    RETURNS TABLE(flight_id bigint, airline_company_id bigint, airline_company_name character varying, origin_country_id integer, origin_country_name character varying, destination_country_id integer, dest_country_name character varying, departure_time timestamp without time zone, landing_time timestamp without time zone, remaining_tickets integer)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+
+        declare start_date timestamp without time zone:= current_date;
+		--declare start_date timestamp without time zone:= make_date(2022, 01, 20);
+		declare end_date timestamp without time zone:=start_date + INTERVAL '12 HOUR';
+		begin
+			return QUERY
+			select
+			fli.id flight_id,
+			fli.airline_company_id airline_company_id,
+			ac.name airline_company_name,
+			fli.origin_country_id origin_country_id,
+			co_orig.name origin_country_name,
+			fli.destination_country_id destination_country_id,
+			co_dest.name dest_country_name,
+			fli.departure_time departure_time,
+			fli.landing_time landing_time,
+			fli.remaining_tickets remaining_tickets
+			from
+			flights fli
+			join airine_companies ac on fli.airline_company_id =ac.id
+			join countries co_orig on fli.origin_country_id = co_orig.id
+			join countries co_dest on fli.destination_country_id = co_dest.id
+			where
+			fli.origin_country_id = _country_id
+			and fli.departure_time >=start_date
+			and fli.departure_time  < end_date;
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_departure_flights(integer)
+    OWNER TO postgres;
+2022-02-15 20:47:36,770 INFO sqlalchemy.engine.Engine [generated in 0.00028s] {}
+2022-02-15 20:47:36,776 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_flights_by_airline_id(bigint);
+CREATE OR REPLACE FUNCTION public.get_flights_by_airline_id(
+	_airline_id bigint)
+    RETURNS TABLE(flight_id bigint, airline_company_id bigint, airline_company_name character varying, origin_country_id integer, origin_country_name character varying, destination_country_id integer, dest_country_name character varying, departure_time timestamp without time zone, landing_time timestamp without time zone, remaining_tickets integer)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+
+		begin
+			return QUERY
+			select
+			fli.id flight_id,
+			fli.airline_company_id airline_company_id,
+			ac.name airline_company_name,
+			fli.origin_country_id origin_country_id,
+			co_orig.name origin_country_name,
+			fli.destination_country_id destination_country_id,
+			co_dest.name dest_country_name,
+			fli.departure_time departure_time,
+			fli.landing_time landing_time,
+			fli.remaining_tickets remaining_tickets
+			from
+			flights fli
+			join airine_companies ac on fli.airline_company_id =ac.id
+			join countries co_orig on fli.origin_country_id = co_orig.id
+			join countries co_dest on fli.destination_country_id = co_dest.id
+			where
+			fli.airline_company_id =_airline_id;
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_flights_by_airline_id(bigint)
+    OWNER TO postgres;
+2022-02-15 20:47:36,777 INFO sqlalchemy.engine.Engine [generated in 0.00029s] {}
+2022-02-15 20:47:36,785 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_flights_by_parameters(integer, integer, date);
+CREATE OR REPLACE FUNCTION public.get_flights_by_parameters(
+	_origin_counry_id integer,
+	_detination_country_id integer,
+	_date date)
+    RETURNS TABLE(flight_id bigint, airline_company_id bigint, airline_company_name character varying, origin_country_id integer, origin_country_name character varying, destination_country_id integer, dest_country_name character varying, departure_time timestamp without time zone, landing_time timestamp without time zone, remaining_tickets integer)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+		declare start_date timestamp without time zone :=_date;
+		declare end_date timestamp without time zone := start_date + INTERVAL '1 DAY';
+
+		begin
+			return QUERY
+			select
+			fli.id flight_id,
+			fli.airline_company_id airline_company_id,
+			ac.name airline_company_name,
+			fli.origin_country_id origin_country_id,
+			co_orig.name origin_country_name,
+			fli.destination_country_id destination_country_id,
+			co_dest.name dest_country_name,
+			fli.departure_time departure_time,
+			fli.landing_time landing_time,
+			fli.remaining_tickets remaining_tickets
+			from
+			flights fli
+			join airine_companies ac on fli.airline_company_id =ac.id
+			join countries co_orig on fli.origin_country_id = co_orig.id
+			join countries co_dest on fli.destination_country_id = co_dest.id
+			where
+			fli.origin_country_id =_origin_counry_id
+			and fli.destination_country_id =_detination_country_id
+			and ((fli.departure_time >= start_date and fli.departure_time <end_date)
+			or (fli.landing_time >= start_date and fli.landing_time <end_date));
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_flights_by_parameters(integer, integer, date)
+    OWNER TO postgres;
+2022-02-15 20:47:36,785 INFO sqlalchemy.engine.Engine [generated in 0.00026s] {}
+2022-02-15 20:47:36,793 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_overlapped_filghts(bigint, bigint);
+CREATE OR REPLACE FUNCTION public.get_overlapped_filghts(
+	_customer_id bigint,
+	_new_flight_id bigint)
+    RETURNS TABLE(id bigint, airline_company_id bigint, origin_country_id integer, destination_country_id integer, departure_time timestamp without time zone, landing_time timestamp without time zone, remaining_tickets integer)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+		begin
+		return QUERY
+		with new_fli as (
+			select * from flights fli
+			where fli.id = _new_flight_id
+			limit 1
+		)
+		select fli.*
+		from tickets tick
+		join flights fli on tick.flight_id =fli.id
+		where tick.customer_id =_customer_id
+		and fli.id <>(select f.id from new_fli f limit 1 )
+		and not(
+			(fli.departure_time > (select f.landing_time from new_fli f limit 1)
+			and fli.landing_time > (select f.landing_time from new_fli f limit 1))
+			or
+			(fli.departure_time  < (select f.departure_time from new_fli f limit 1)
+			and fli.landing_time < (select f.departure_time from new_fli f limit 1))
+		);
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_overlapped_filghts(bigint, bigint)
+    OWNER TO postgres;
+2022-02-15 20:47:36,793 INFO sqlalchemy.engine.Engine [generated in 0.00026s] {}
+2022-02-15 20:47:36,800 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_tickets_by_customer(bigint);
+CREATE OR REPLACE FUNCTION public.get_tickets_by_customer(
+	_customer_id bigint)
+    RETURNS TABLE(id bigint, flight_id bigint, customer_id bigint)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+		begin
+			return QUERY
+			select *
+			from tickets tick
+			where tick.customer_id =_customer_id;
+
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_tickets_by_customer(bigint)
+    OWNER TO postgres;
+2022-02-15 20:47:36,801 INFO sqlalchemy.engine.Engine [generated in 0.00028s] {}
+2022-02-15 20:47:36,807 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_user_by_username(text);
+CREATE OR REPLACE FUNCTION public.get_user_by_username(
+	_username text)
+    RETURNS TABLE(id bigint, username character varying, password character varying, email character varying, user_role integer)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+		begin
+			return QUERY
+			select * from users usr
+			where usr.username like _username;
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_user_by_username(text)
+    OWNER TO postgres;
+
+2022-02-15 20:47:36,807 INFO sqlalchemy.engine.Engine [generated in 0.00027s] {}
+2022-02-15 20:47:36,815 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_administrator_by_username(text);
+CREATE OR REPLACE FUNCTION public.get_administrator_by_username(
+	_username text)
+    RETURNS TABLE(id integer, first_name character varying,  last_name character varying, user_id bigint)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+		begin
+			return QUERY
+			select ad.*
+			from administrators ad
+			join users usr on ad.user_id = usr.id
+			where usr.username like _username;
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_administrator_by_username(text)
+    OWNER TO postgres;
+2022-02-15 20:47:36,815 INFO sqlalchemy.engine.Engine [generated in 0.00025s] {}
+2022-02-15 20:47:36,821 INFO sqlalchemy.engine.Engine DROP FUNCTION IF EXISTS public.get_flights_by_customer(bigint);
+CREATE OR REPLACE FUNCTION public.get_flights_by_customer(
+	_customer_id bigint)
+    RETURNS TABLE(flight_id bigint, airline_company_id bigint, airline_company_name character varying, origin_country_id integer, origin_country_name character varying, destination_country_id integer, dest_country_name character varying, departure_time timestamp without time zone, landing_time timestamp without time zone, remaining_tickets integer)
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+		begin
+			return QUERY
+			select * from flights fli
+			join tickets tick on fli.id = tick.flight_id
+			where tick.customer_id= _customer_id;
+		end;
+
+$BODY$;
+
+ALTER FUNCTION public.get_flights_by_customer(bigint)
+    OWNER TO postgres;
+
+2022-02-15 20:47:36,821 INFO sqlalchemy.engine.Engine [generated in 0.00025s] {}
+2022-02-15 20:47:36,830 INFO sqlalchemy.engine.Engine DROP PROCEDURE IF EXISTS public.remove_airline(bigint);
+CREATE OR REPLACE PROCEDURE public.remove_airline(
+	_airline_company_id bigint)
+    LANGUAGE 'plpgsql'
+AS $BODY$
+	declare airline_user_id bigint;
+	begin
+		select ac.user_id into airline_user_id from
+		airine_companies ac
+		where ac.id =_airline_company_id;
+		--TICKETS
+		delete from tickets tick
+		where tick.flight_id in
+		(select fli.id from flights fli
+		where fli.airline_company_id = _airline_company_id);
+		--FLIGHTS
+			delete from flights fli
+		where fli.airline_company_id = _airline_company_id;
+		   --AIRLINE COMPANY
+		delete from airine_companies ac
+		where ac.id = _airline_company_id;
+		--USER
+		delete from users usr
+		where usr.id = airline_user_id;
+	end;
+$BODY$;
+
+ALTER PROCEDURE public.remove_airline(bigint)
+    OWNER TO postgres;
+2022-02-15 20:47:36,830 INFO sqlalchemy.engine.Engine [generated in 0.00042s] {}
+2022-02-15 20:47:36,837 INFO sqlalchemy.engine.Engine DROP PROCEDURE IF EXISTS public.remove_customer(bigint);
+
+CREATE OR REPLACE PROCEDURE public.remove_customer(
+	IN _customer_id bigint)
+LANGUAGE 'plpgsql'
+AS $BODY$
+	declare customer_user_id bigint;
+	begin
+		select cust.user_id into customer_user_id
+		from customers cust
+		where cust.id =_customer_id;
+		delete from customers cust
+		where cust.id = _customer_id;
+		--USER
+		delete from users usr
+		where usr.id = customer_user_id;
+	end;
+$BODY$;
+2022-02-15 20:47:36,837 INFO sqlalchemy.engine.Engine [generated in 0.00025s] {}
+2022-02-15 20:47:36,845 INFO sqlalchemy.engine.Engine DROP PROCEDURE IF EXISTS public.remove_administrator(bigint);
+
+CREATE OR REPLACE PROCEDURE public.remove_administrator(
+	IN _administrator_id bigint)
+LANGUAGE 'plpgsql'
+AS $BODY$
+	declare administrator_user_id bigint;
+	begin
+		select ad.user_id into administrator_user_id
+		from administrators ad
+		where ad.id =_administrator_id;
+		delete from administrators ad
+		where ad.id = _administrator_id;
+		--USER
+		delete from users usr
+		where usr.id = administrator_user_id;
+	end;
+$BODY$;
