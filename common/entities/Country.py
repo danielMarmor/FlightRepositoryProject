@@ -6,9 +6,10 @@ from common.entities.db_config import Base
 
 class Country(Base):
     __tablename__ = 'countries'
+    NAME_MAX = 50
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50), unique=True, nullable=False)
+    name = Column(String(NAME_MAX), unique=True, nullable=False)
 
     def __str__(self):
         return f'<Country> id:{self.id} name:{self.name}'

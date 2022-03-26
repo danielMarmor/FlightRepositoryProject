@@ -117,7 +117,7 @@ class AdministratorFacade(FacadeBase):
         # validate
         try:
             user = user.adapt_str()
-            administrator .adapt_str()
+            administrator.adapt_str()
             self._loginService.validate_new_user(user)
             self._airlineService.validate_administrator(administrator)
             self._airlineService.add_administrator(administrator, user)

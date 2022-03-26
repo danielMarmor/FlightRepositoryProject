@@ -56,6 +56,12 @@ class OrdersService:
         tickets = self._repository.get_tickets_by_customer(customer_id)
         return tickets
 
+    def get_ticket_by_customer_fligth(self, flight_id, customer_id):
+        ticket_cond = (lambda query: query.filter(Ticket.customer_id == customer_id,
+                                                  Ticket.flight_id == flight_id))
+        tickets = self._repository.get_all_by_condition(Ticket, ticket_cond)
+        return tickets
+
     # def get_tickets_by_customer(self, customer_id):
     #     customer_tickets_cond = (lambda query: query.filter(Ticket.customer_id == customer_id))
     #     customer_tickets = self._repository.get_all_by_condition(Ticket, customer_tickets_cond)

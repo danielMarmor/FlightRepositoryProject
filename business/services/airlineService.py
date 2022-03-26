@@ -238,3 +238,10 @@ class AirlineService:
         country = self._repository.get_by_id(Country, country_id)
         return country
 
+    def add_country(self, new_country):
+        self._repository.add(new_country)
+
+    def get_country_by_name(self, name):
+        country_cond = (lambda query: query.filter(Country.name == name))
+        countries = self._repository.get_all_by_condition(Country, country_cond)
+        return countries

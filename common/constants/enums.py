@@ -113,6 +113,9 @@ class TicketBalanceOperation(IntEnum):
     REMOVE_TICKET = 2
 
 
+class DbGenerationOpetion(IntEnum):
+    ADD = 1,
+    REPLACE = 2
 
 
 

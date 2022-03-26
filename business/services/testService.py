@@ -199,3 +199,38 @@ class TestService:
 
         self._repository.commit()
 
+    def restore_database_no_recreate(self, is_delete):
+        if is_delete:
+            self._repository.reset_table_auto_incerement(Ticket)
+            self._repository.reset_table_auto_incerement(Customer)
+            self._repository.reset_table_auto_incerement(Flight)
+            self._repository.reset_table_auto_incerement(Administrator)
+            self._repository.reset_table_auto_incerement(AirlineCompany)
+            self._repository.reset_table_auto_incerement(User)
+            self._repository.reset_table_auto_incerement(UserRole)
+            self._repository.reset_table_auto_incerement(Country)
+            self._repository.commit()
+
+            initial_user_roles = [
+                UserRole(role_name='Customer'),
+                UserRole(role_name='AirlineCompany'),
+                UserRole(role_name='Administrator')
+            ]
+            self._repository.add_all(initial_user_roles)
+            self._repository.commit()
+        else:
+            countries = self._repository.get_all(Country)
+            if len(countries) == 0:
+                self._repository.reset_table_auto_incerement(Country)
+
+            user_roles = self._repository.get_all(UserRole)
+            if len(user_roles) == 0:
+                self._repository.reset_table_auto_incerement(UserRole)
+                initial_user_roles = [
+                    UserRole(role_name='Customer'),
+                    UserRole(role_name='AirlineCompany'),
+                    UserRole(role_name='Administrator')
+                ]
+                self._repository.add_all(initial_user_roles)
+
+            self._repository.commit()

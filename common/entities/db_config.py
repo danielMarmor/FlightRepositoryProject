@@ -14,7 +14,7 @@ connection_string = config['db']['connection_string']
 # connection_string = 'postgresql+psycopg2://postgres:admin@localhost/FlightSystem'
 Base = declarative_base()
 
-engine = create_engine(connection_string, echo=True)
+engine = create_engine(connection_string, echo=False)
 
 
 def create_all_entities():

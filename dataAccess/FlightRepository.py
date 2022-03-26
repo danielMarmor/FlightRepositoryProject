@@ -111,10 +111,12 @@ class FilghtRepository:
     def add(self, entry):
         try:
             self.local_session.add(entry)
+            self.local_session.flush()
             self.local_session.commit()
             # SECCEDED
             self.logger.log(logging.INFO, f'add: {str(entry)}')
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'add: {str(ex)}')
             raise ex
 

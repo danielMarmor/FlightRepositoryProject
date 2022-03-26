@@ -10,7 +10,7 @@ class Customer(Base):
     MAX_FIRST_NAME = 50
     MAX_LAST_NAME = 50
     MAX_ADDRESS = 200
-    MAX_PHONE = 20
+    MAX_PHONE = 50
     MAX_CREDIT_CARD = 24
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
