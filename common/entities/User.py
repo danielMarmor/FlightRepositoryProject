@@ -17,7 +17,7 @@ class User(Base):
     email = Column(String(EMAIL_MAX), unique=True, nullable=False)
     user_role = Column(Integer, ForeignKey('user_roles.id'), nullable=False)
 
-    userrole = relationship('UserRole', backref=backref('users'), uselist=True)
+    # userrole = relationship('UserRole', backref=backref('users'), uselist=True)
 
     def __str__(self):
         return f'<User> id:{self.id} username=:{self.username} password:{self.password} ' \
