@@ -7,7 +7,6 @@ import threading
 import functools
 
 
-
 class ManageConsumners:
     READONLY_QUEUE_NAME = 'READONLY'
     WRITE_QUEUE_NAME = 'WRITE'
@@ -46,28 +45,13 @@ class ManageConsumners:
         except KeyboardInterrupt:
             self.connection.close()
 
-    # def start_write_consumer(self):
-    #     write_channel = self.channel
-    #     write_channel.queue_delete(self.WRITE_QUEUE_NAME)
-    #     write_channel.queue_declare(queue=self.WRITE_QUEUE_NAME)
-    #     write_channel.basic_consume(queue=self.WRITE_QUEUE_NAME, on_message_callback=self.write_callback, auto_ack=True)
-    #
-    #     print(' [*] Waiting for messages. To exit press CTRL+C')
-    #     write_channel.start_consuming()
-    #     write_channel.queue_delete(self.WRITE_QUEUE_NAME)
-    #     self.connection.close()
-
-    # def init_response_publisher(self):
-    #     self.channel.queue_declare(queue=self.RENPONSE_QUEUE_NAME)
-
-        # CALLBACK READ
-
+    # CALLBACK READ
     def read_callback(self, ch, method, properties, body):
         message = json.loads(body)
         # message = json.loads(body)
-        self.read_invoke(message)
-        # invoke_thread = threading.Thread(target=self.read_invoke, args=[message])
-        # invoke_thread.start()
+        # self.read_invoke(message)
+        invoke_thread = threading.Thread(target=self.read_invoke, args=[message])
+        invoke_thread.start()
 
     def read_invoke(self, message):
         correlation_id = message['correlation_id']
