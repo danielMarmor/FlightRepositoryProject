@@ -20,6 +20,7 @@ from common.exceptions.notValidOrderException import NotValidOrderException
 from dbGenerator.consumeParams import ConsumeParams
 from dbGenerator.generateErrors import GenerateErrors
 
+
 class DbGeneratorConsumer:
     QUEUE_NAME = 'FlightSystemData'
     RESPONSE_QUEUE_NAME = 'FlightSysDbUpdateProgress'

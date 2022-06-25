@@ -32,3 +32,12 @@ class AirlineCompany(Base):
     def adapt_str(self):
         self.name = self.name.strip()
 
+    @property
+    def serialize(self):
+        data = {'id': self.id,
+                'name': self.name,
+                'country_id': self.country_id,
+                'user_id': self.user_id
+                }
+        return data
+

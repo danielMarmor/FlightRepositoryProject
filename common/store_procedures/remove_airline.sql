@@ -1,6 +1,6 @@
 DROP PROCEDURE IF EXISTS public.remove_airline(bigint);
 CREATE OR REPLACE PROCEDURE public.remove_airline(
-	_airline_company_id bigint)
+	IN _airline_company_id bigint)
     LANGUAGE 'plpgsql'
 AS $BODY$
 	declare airline_user_id bigint;

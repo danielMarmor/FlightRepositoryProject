@@ -1,7 +1,7 @@
 DROP FUNCTION IF EXISTS public.get_flights_by_airline_id(bigint);
 CREATE OR REPLACE FUNCTION public.get_flights_by_airline_id(
 	_airline_id bigint)
-    RETURNS TABLE(flight_id bigint, airline_company_id bigint, airline_company_name character varying, origin_country_id integer, origin_country_name character varying, destination_country_id integer, dest_country_name character varying, departure_time timestamp without time zone, landing_time timestamp without time zone, remaining_tickets integer)
+    RETURNS TABLE(flight_id bigint, airline_company_id bigint, airline_company_name character varying, origin_country_id integer, origin_country_name character varying, destination_country_id integer, dest_country_name character varying, departure_time text, landing_time text, remaining_tickets integer)
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -19,8 +19,8 @@ AS $BODY$
 			co_orig.name origin_country_name,
 			fli.destination_country_id destination_country_id,
 			co_dest.name dest_country_name,
-			fli.departure_time departure_time,
-			fli.landing_time landing_time,
+			TO_CHAR(fli.departure_time, 'DD/MM/YYYY HH24:MI:SS') departure_time,
+			TO_CHAR(fli.landing_time, 'DD/MM/YYYY HH24:MI:SS') landing_time,
 			fli.remaining_tickets remaining_tickets
 			from
 			flights fli

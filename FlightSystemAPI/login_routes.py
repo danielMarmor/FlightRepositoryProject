@@ -1,10 +1,11 @@
-from flask import Flask, app, render_template, request, redirect
+from flask import Flask, app, render_template, request, redirect, Blueprint
 from business.facade.anonymousFacade import *
 from common.entities.User import User
 from common.entities.db_config import local_session, create_all_entities, connection_string
 from common.entities.db_conifg_procedured import load_db_scripts
 
 import os
+
 
 template_dir = os.path.abspath('../templates')
 app = Flask(__name__, template_folder=template_dir)

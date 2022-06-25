@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, BigInteger, String, DateTime, ForeignKey, LargeBinary
 from sqlalchemy.orm import relationship, backref
 from common.entities.db_config import Base
+from common.entities.UserRole import UserRole
 
 
 class User(Base):
@@ -37,3 +38,13 @@ class User(Base):
                     password=self.password.strip(),
                     email=self.email.strip(),
                     user_role=self.user_role)
+
+    @property
+    def serialize(self):
+        data = {'id': self.id,
+                'username': self.username,
+                'password': self.password,
+                'email': self.email,
+                'user_role': self.user_role
+                }
+        return data

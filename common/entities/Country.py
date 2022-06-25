@@ -17,5 +17,10 @@ class Country(Base):
     def __repr__(self):
         return f'<Country> id:{self.id} name:{self.name}'
 
-
+    @property
+    def serialize(self):
+        data = {'id': self.id,
+                'name': self.name,
+                }
+        return data
 

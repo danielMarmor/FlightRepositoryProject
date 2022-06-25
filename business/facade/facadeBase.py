@@ -71,6 +71,7 @@ class FacadeBase:
     def get_airlines_by_parameters(self, country_id, name):
         try:
             airlines = self._airlineService.get_airlines_by_parameters(country_id, name)
+            return airlines
         except Exception as exc:
             self.handle_exception(Actions.GET_AIRLINES_BY_PARAMS, exc)
 

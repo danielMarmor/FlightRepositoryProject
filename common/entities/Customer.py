@@ -45,3 +45,16 @@ class Customer(Base):
         self.address = self.address.strip()
         self.phone_number = self.phone_number.strip()
         self.credit_card_number = self.credit_card_number.strip()
+
+    @property
+    def serialize(self):
+        data = {'id': self.id,
+                'first_name': self.first_name,
+                'last_name': self.last_name,
+                'address': self.address,
+                'phone_number': self.phone_number,
+                'credit_card_number': self.credit_card_number,
+                'user_id': self.user_id
+                }
+        return data
+

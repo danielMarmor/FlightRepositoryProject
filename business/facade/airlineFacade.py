@@ -21,6 +21,10 @@ class AirlineFacade(FacadeBase):
         super().__init__(local_session)
         self._token = token
 
+    @property
+    def token(self):
+        return self._token
+
     def validate_token(self, airline_id, action_id):
         airline = self.get_airline_by_id(airline_id)
         if airline is None:
@@ -32,7 +36,7 @@ class AirlineFacade(FacadeBase):
             raise NotFoundException('Token Not Found', Entity.IDENTITY_TOKEN, airline.user_id)
         match_token = IdentityToken(user.username, user.user_role, airline_id)
         if match_token.identity_id != self._token.identity_id:
-            raise InvalidTokenException('CustomerId Not Match Token Identity_Id', action_id,
+            raise InvalidTokenException('AirlineId Not Match Token Identity_Id', action_id,
                                         self._token, Field.AIRLINE_COMPANY_ID, match_token.identity_id)
         if match_token.user_name != self._token.user_name:
             raise InvalidTokenException('User_name Not Match Token User_name', action_id,

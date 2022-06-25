@@ -28,3 +28,11 @@ class Ticket(Base):
         return other.id == self.id and other.flight_id == self.flight_id \
             and other.customer_id == self.customer_id
 
+    @property
+    def serialize(self):
+        data = {'id': self.id,
+                'flight_id': self.flight_id,
+                'customer_id': self.customer_id,
+                }
+        return data
+

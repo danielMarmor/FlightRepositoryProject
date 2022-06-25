@@ -31,7 +31,8 @@ class AnonymousFacade(FacadeBase):
             LoginService.validate_login(username, password)
             user = self._loginService.login(username, password)
             facade = self.create_facade(user.user_role, user.username)
-            return facade
+            token = facade.token
+            return token
         except Exception as exc:
             self.handle_exception(Actions.LOGIN, exc)
 

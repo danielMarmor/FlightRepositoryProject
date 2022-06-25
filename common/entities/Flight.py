@@ -4,8 +4,10 @@ from sqlalchemy.orm import relationship, backref
 from common.entities.db_config import Base
 from common.entities.Country import Country
 from common.entities.AirlineCompany import AirlineCompany
+from dataclasses import dataclass
 
 
+@dataclass
 class Flight(Base):
     __tablename__ = 'flights'
 
@@ -42,3 +44,16 @@ class Flight(Base):
             and other.departure_time == self.departure_time \
             and other.landing_time == self.landing_time \
             and other.remaining_tickets == self.remaining_tickets
+
+    @property
+    def serialize(self):
+        data = {'id': self.id,
+                'airline_company_id': self.airline_company_id,
+                'origin_country_id': self.origin_country_id,
+                'destination_country_id': self.destination_country_id,
+                'departure_time': str(self.departure_time),
+                'landing_time': str(self.landing_time),
+                'remaining_tickets': self.remaining_tickets
+                }
+        return data
+

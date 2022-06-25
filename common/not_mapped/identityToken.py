@@ -17,3 +17,11 @@ class IdentityToken:
     def __repr__(self):
         return f'<IdentityToken> user_name:{self.user_name}, user_role_id:{self.user_role_id} ' \
                f'identity_id:{self.identity_id}'
+
+    @property
+    def serialize(self):
+        data = {'user_name': self.user_name,
+                'user_role_id': self.user_role_id,
+                'identity_id': self.identity_id}
+        return data
+

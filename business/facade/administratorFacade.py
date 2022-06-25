@@ -20,6 +20,10 @@ class AdministratorFacade(FacadeBase):
         super().__init__(local_session)
         self._token = token
 
+    @property
+    def token(self):
+        return self._token
+
     def validate_token(self, administrator_id, action_id):
         administrator = self._airlineService.get_administrator_by_id(administrator_id)
         if administrator is None:
