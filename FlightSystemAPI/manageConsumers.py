@@ -12,8 +12,9 @@ class ManageConsumners:
     WRITE_QUEUE_NAME = 'WRITE'
     RENPONSE_QUEUE_NAME = 'RESPONSE'
 
-    def __init__(self, pool_events, db_session):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    def __init__(self, db_session):
+        parameters = pika.ConnectionParameters(host='localhost', port=5672)
+        self.connection = pika.BlockingConnection(parameters);
         self.channel = self.connection.channel()
         self.invoke_requests = InvokeRequests(db_session)
 
@@ -31,17 +32,16 @@ class ManageConsumners:
         try:
             self.channel.queue_delete(self.READONLY_QUEUE_NAME)
             self.channel.queue_delete(self.WRITE_QUEUE_NAME)
-            self.channel.queue_declare(queue=self.READONLY_QUEUE_NAME)
-            self.channel.queue_declare(queue=self.WRITE_QUEUE_NAME)
-            self.channel.queue_declare(queue=self.RENPONSE_QUEUE_NAME)
+            self.channel.queue_delete(self.RENPONSE_QUEUE_NAME)
+            self.channel.queue_declare(queue=self.READONLY_QUEUE_NAME, durable=False)
+            self.channel.queue_declare(queue=self.WRITE_QUEUE_NAME, durable=False)
+            self.channel.queue_declare(queue=self.RENPONSE_QUEUE_NAME, durable=False)
             self.channel.basic_consume(queue=self.READONLY_QUEUE_NAME, on_message_callback=self.read_callback, auto_ack=True)
             self.channel.basic_consume(queue=self.WRITE_QUEUE_NAME, on_message_callback=self.write_callback, auto_ack=True)
 
             print(' [*] Waiting for messages. To exit press CTRL+C')
             self.channel.start_consuming()
-            self.channel.queue_delete(self.READONLY_QUEUE_NAME)
-            self.channel.queue_delete(self.WRITE_QUEUE_NAME)
-            self.connection.close()
+            self.connection.close();
         except KeyboardInterrupt:
             self.connection.close()
 
@@ -54,10 +54,11 @@ class ManageConsumners:
         invoke_thread.start()
 
     def read_invoke(self, message):
-        correlation_id = message['correlation_id']
-        facade_name = message['payload']['facade_name']
-        action_id = message['payload']['action_id']
-        data = message['payload']['data']
+        msg_json = json.loads(message);
+        correlation_id = msg_json['correlation_id']
+        facade_name = msg_json['payload']['facade_name']
+        action_id = msg_json['payload']['action_id']
+        data = msg_json['payload']['data']
         response = None
         system_exeption = None
         try:

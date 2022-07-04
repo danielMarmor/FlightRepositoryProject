@@ -120,4 +120,22 @@ class AnonymousFacade(FacadeBase):
              logger.log(logging.ERROR, f'{str(exception)}')
              raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
 
+    def get_all_customers_users(self):
+        try:
+            users = self._loginService.get_all_customers_users()
+            return users
+        except Exception as exc:
+            self.handle_exception(Actions.GET_ALL_USERS, exc)
 
+    def get_tickets_by_username(self, email):
+        try:
+            user = self._loginService.get_user_by_email(email)
+            if user is None:
+                raise NotFoundException('User Not Found', Entity.USER, email)
+            customer = self._customerService.get_customer_by_user_id(user.id)
+            if customer is None:
+                raise NotFoundException('Customer Not Found', Entity.CUSTOMER, user.id)
+            customer_tickets = self._ordersService.get_tickets_by_customer(customer.id)
+            return customer_tickets
+        except Exception as exc:
+            self.handle_exception(Actions.GET_TICKETS_BY_USER, exc)

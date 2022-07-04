@@ -147,3 +147,4 @@ class CustomerFacade(FacadeBase):
         else:  # PYTHON EXCEPTION - ALSO GENERAL MESSAGE ERROR
             logger.log(logging.ERROR, f'{str(exception)}')
             raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
+

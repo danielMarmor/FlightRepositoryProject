@@ -5,7 +5,8 @@ from common.constants.enums import Reason, Field
 from common.constants.settings import USERNANE_MAX_LENGTH, PASSWORD_MIN_LENGHT, PASSWORD_MAX_LENGTH, EMAIL_MAX_LENGTH
 from common.exceptions.notValidInputException import NotVaildInputException
 from common.exceptions.notUniqueException import NotUniqueException
-from common.constants.enums import Actions, Field
+from common.constants.enums import Actions, Field, UserRoles
+
 class LoginService:
     def __init__(self, local_session,  repository):
         self._repository = repository
@@ -92,10 +93,10 @@ class LoginService:
 
     def get_user_by_email(self, email):
         email_filter = (lambda query: query.filter(User.email == email))
-        user_name_entries = self._repository.get_all_by_condition(User, email_filter)
-        if len(user_name_entries) == 0:
+        email_entries = self._repository.get_all_by_condition(User, email_filter)
+        if len(email_entries) == 0:
             return None
-        user = user_name_entries[0]
+        user = email_entries[0]
         return user
 
     def get_user_by_id(self, user_id):
@@ -105,6 +106,11 @@ class LoginService:
             return None
         user = user_id_entries[0]
         return user
+
+    def get_all_customers_users(self):
+        cust_role_filter = (lambda query: query.filter(User.user_role == UserRoles.CUSTOMER))
+        entries = self._repository.get_all_by_condition(User, cust_role_filter)
+        return entries
 
 
 

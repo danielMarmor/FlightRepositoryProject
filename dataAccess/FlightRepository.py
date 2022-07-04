@@ -479,7 +479,14 @@ class FilghtRepository:
         try:
             stmt = text('select * from get_tickets_by_customer(:_customer_id)') \
                 .bindparams(_customer_id=customer_id)
-            tickets = self.local_session.execute(stmt).all()
+            results = self.local_session.execute(stmt).all()
+            tickets = [{'ticket_id': res[0],
+                        'first_name': res[1],
+                        'last_name': res[2],
+                        'origin_country_name': res[3],
+                        'destination_country_name': res[4],
+                        'departure_time': res[5],
+                        } for res in results]
             self.logger.log(logging.INFO, f'get_flights_by_airline_id: {tickets}')
             return tickets
         except Exception as ex:

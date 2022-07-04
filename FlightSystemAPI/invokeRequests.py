@@ -68,6 +68,11 @@ class InvokeRequests:
                                     user_id=data['customer']['user_id'])
                 facade.add_customer(customer, user)
                 response = None
+            case Actions.GET_ALL_USERS:
+                response = facade.get_all_customers_users()
+            case Actions.GET_TICKETS_BY_USER:
+                email = data['email']
+                response = facade.get_tickets_by_username(email)
         return response
 
     def invoke_admin(self, action_id, data):
@@ -279,7 +284,6 @@ class InvokeRequests:
                 res_data = facade.get_my_tickets(customer_id)
                 data_props = ('ticket_id', 'flight_id', 'customer_id')
                 response = GenericService.wrap_list_dict(res_data, data_props)
-                pass
         return response
 
 

@@ -131,4 +131,8 @@ class FacadeBase:
             logger.log(logging.ERROR, f'{str(exception)}')
             raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
 
+    # added custom functions
+
+
+
 

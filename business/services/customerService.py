@@ -120,3 +120,11 @@ class CustomerService:
         customer_flights = self._repository.get_flights_by_customer(customer_id)
         return customer_flights
 
+    def get_customer_by_user_id(self, user_id):
+        user_id_filter = (lambda query: query.filter(Customer.user_id == user_id))
+        entries = self._repository.get_all_by_condition(Customer, user_id_filter)
+        if len(entries) == 0:
+            return None
+        customer = entries[0]
+        return customer
+
