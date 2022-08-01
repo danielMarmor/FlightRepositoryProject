@@ -1,6 +1,8 @@
 import datetime
-from common.entities.db_config import Base
+import json
 
+from common.entities.db_config import Base
+import decimal
 
 class GenericService:
     @staticmethod
@@ -12,12 +14,16 @@ class GenericService:
     @staticmethod
     def compose_datetime(date: str, hour: int, minute: int, date_split_delim: str):
         split_date = date.split(date_split_delim)
-        date_year = int(split_date[0])
+        date_year = int(split_date[2])
         date_month = int(split_date[1])
-        date_day = int(split_date[2])
+        date_day = int(split_date[0])
 
         compose_date = datetime.datetime(date_year, date_month, date_day,  hour, minute, 0)
         return compose_date
+
+    @staticmethod
+    def has_method(o, name):
+        return callable(getattr(o, name, None))
 
     @staticmethod
     def wrap_list_dict(response: list, props: tuple):
@@ -43,12 +49,22 @@ class GenericService:
         return serialize_response
 
     @staticmethod
-    def serialize(obj_value):
+    def serialize(obj):
         # BASE (ALCHEMY)
-        if isinstance(obj_value, dict):
-            return obj_value
-        if isinstance(obj_value, Base):
-            return obj_value.serialize
-        # DEFAULT NOT MAPPED
-        return obj_value.serialize
+        serialize = getattr(type(obj), 'serialize', None)
+        if serialize:
+            return obj.serialize
+        return obj
+
+    @staticmethod
+    def json_serial(obj):
+        """JSON serializer for objects not serializable by default json code"""
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        if isinstance(obj, decimal.Decimal):
+            return json.dumps(float(obj))
+        serialize = getattr(type(obj), 'serialize', None)
+        if serialize:
+            return obj.serialize
+        raise TypeError("Type %s not serializable" % type(obj))
 

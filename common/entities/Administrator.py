@@ -35,3 +35,12 @@ class Administrator(Base):
     def adapt_str(self):
         self.first_name = self.first_name.strip()
         self.last_name = self.last_name.strip()
+
+    @property
+    def serialize(self):
+        data = {'id': self.id,
+                'first_name': self.first_name,
+                'last_name': self.last_name,
+                'user_id': self.user_id
+                }
+        return data

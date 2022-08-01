@@ -55,13 +55,20 @@ class AirlineFacade(FacadeBase):
         except Exception as exc:
             self.handle_exception(Actions.GET_FLIGHT_BY_AIRLINE, exc)
 
-    def update_airline(self, airline_id, airline):
+    def update_airline(self, airline_id, airline, user):
         try:
             airline.adapt_str()
             airline_company = self.get_airline_by_id(airline_id)
+            user_id = airline_company.user_id
             self.validate_token(airline_company.id, Actions.UPDATE_AIRLINE)
+            self._loginService.validate_update_user(user_id, user)
+            airline.id = airline_id
+            airline.user_id = user_id
             self._airlineService.validate_airline(airline)
-            self._airlineService.update_airline(airline_company.id, airline)
+            self._airlineService.update_airline(user_id, user, airline_id, airline)
+            upd_user = self._loginService.login(user.username, user.password)
+            self._token = IdentityToken(upd_user.username, upd_user.user_role, airline_id)
+            return self.token
         except Exception as exc:
             self.handle_exception(Actions.UPDATE_AIRLINE, exc)
 
@@ -71,6 +78,7 @@ class AirlineFacade(FacadeBase):
             airline_company = self.get_airline_by_id(flight.airline_company_id)
             self.validate_token(airline_company.id, Actions.ADD_FLIGHT)
             self._airlineService.add_fligth(flight)
+            return flight
         except Exception as exc:
             self.handle_exception(Actions.ADD_FLIGHT, exc)
 

@@ -1,7 +1,4 @@
 from business.facade.facadeBase import FacadeBase
-from business.services.customerService import CustomerService
-from business.services.ordersService import OrdersService
-from business.services.loginService import LoginService
 from common.constants.enums import Field, Reason, Entity, Actions
 from common.exceptions.notValidInputException import NotVaildInputException
 from common.exceptions.systemException import FlightSystemException
@@ -48,15 +45,22 @@ class CustomerFacade(FacadeBase):
                                         self.token, Field.CUSTOMER_ID, match_token.identity_id)
 
     # customer
-    def update_customer(self, customer_id, customer):
+    def update_customer(self, customer_id, customer, user):
         try:
             customer.adapt_str()
             exist_customer = self.get_customer_by_id(customer_id)
             if exist_customer is None:
                 raise NotFoundException('Customer Not Found', Entity.CUSTOMER, customer_id)
+            user_id = exist_customer.user_id
+            customer.id = customer_id
+            customer.user_id = user_id
             self.validate_token(customer_id, Actions.UPDATE_CUSTOMER)
+            self._loginService.validate_update_user(user_id, user)
             self._customerService.validate_customer(customer)
-            self._customerService.update_customer(customer.id, customer)
+            self._customerService.update_customer(user_id, user, customer_id, customer)
+            upd_user = self._loginService.login(user.username, user.password)
+            self._token = IdentityToken(upd_user.username, upd_user.user_role, customer_id)
+            return self.token
         except Exception as exc:
             self.handle_exception(Actions.UPDATE_CUSTOMER, exc)
 
@@ -76,6 +80,7 @@ class CustomerFacade(FacadeBase):
             self._ordersService.check_order(flight, customer)
             # add tickets and #  remove ticket from flight remaing tickets
             self._ordersService.add_ticket(ticket, flight)
+            return ticket
         except Exception as exc:
             self.handle_exception(Actions.ADD_TICKET, exc)
 

@@ -25,7 +25,7 @@ class LoginService:
         login_filter = (lambda query: query.filter(User.username == usrname, User.password == pssword))
         login_user_entries = self._repository.get_all_by_condition(User, login_filter)
         if len(login_user_entries) == 0:
-            raise NotValidLoginException('User Not found by user-password match', usrname, pssword)
+            raise NotValidLoginException(f'User Not found by user-password match {usrname}, {pssword}', usrname, pssword)
         login_user = login_user_entries[0]
         return login_user
 
@@ -39,6 +39,36 @@ class LoginService:
         self.password_validation(user.password)
         self.email_validation(user.email)
 
+    def validate_update_user(self, user_id,  user):
+        # USER NAME
+        username = user.username.strip()
+        if username == EMPTY:
+            raise NotVaildInputException('User Is Empty', Reason.EMPTY, Field.USER_NAME)
+        is_too_long = len(username) > USERNANE_MAX_LENGTH
+        if is_too_long:
+            raise NotVaildInputException(f'User Name too long : Must be not bigger than {USERNANE_MAX_LENGTH} letters',
+                                         Reason.TOO_LONG, Field.USER_NAME)
+        unique_user_cond = (lambda query: query.filter(User.username == username,  User.id != user_id))
+        unique_user = self._repository.get_all_by_condition(User, unique_user_cond)
+        if len(unique_user) > 0:
+            raise NotUniqueException('Not Unique User Name', Actions.CREATE_NEW_USER, Field.USER_NAME, username)
+
+        # PASSWORD
+        self.password_validation(user.password)
+        # EMAIL
+        email = user.email.strip()
+        if email == EMPTY:
+            raise NotVaildInputException('Email Is Empty', Reason.EMPTY, Field.USER_EMAIL)
+        is_too_long = len(email) > EMAIL_MAX_LENGTH
+        if is_too_long:
+            raise NotVaildInputException(f'Email too long : Must be at least {EMAIL_MAX_LENGTH} letters!',
+                                         Reason.TOO_LONG, Field.USER_EMAIL)
+        unique_email_cond = (lambda query: query.filter(User.email == email, User.id != user_id))
+        unique_user = self._repository.get_all_by_condition(User, unique_email_cond)
+        if len(unique_user) > 0:
+            raise NotUniqueException('Not Unique Email', Actions.CREATE_NEW_USER, Field.USER_EMAIL, email)
+
+
     def username_validation(self, username: str):
         username = username.strip()
         if username == EMPTY:
@@ -51,6 +81,7 @@ class LoginService:
         unique_user = self._repository.get_all_by_condition(User, unique_user_cond)
         if len(unique_user) > 0:
             raise NotUniqueException('Not Unique User Name', Actions.CREATE_NEW_USER, Field.USER_NAME, username)
+
 
     def password_validation(self, password: str):
         password = password.strip()
@@ -111,6 +142,15 @@ class LoginService:
         cust_role_filter = (lambda query: query.filter(User.user_role == UserRoles.CUSTOMER))
         entries = self._repository.get_all_by_condition(User, cust_role_filter)
         return entries
+
+    def update_user(self, user_id, user):
+        user_updated_data = {
+            'username': user.username,
+            'password': user.password,
+            'email': user.email
+        }
+        self._repository.update(User, 'id', user_id, user_updated_data)
+
 
 
 

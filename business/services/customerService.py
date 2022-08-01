@@ -92,15 +92,8 @@ class CustomerService:
     # def add_customer(self, customer):
     #     self._repository.add(customer)
 
-    def update_customer(self, customer_id, customer):
-        customer_updated_data = {
-            'first_name': customer.first_name,
-            'last_name': customer.last_name,
-            'address': customer.address,
-            'phone_number': customer.phone_number,
-            'credit_card_number': customer.credit_card_number
-        }
-        self._repository.update(Customer, 'id', customer_id, customer_updated_data)
+    def update_customer(self, user_id,  user, customer_id, customer):
+        self._repository.update_customer(user_id, user, customer_id, customer)
 
     def remove_customer(self, customer_id):
         customer = self.get_customer_by_id(customer_id)
@@ -128,3 +121,8 @@ class CustomerService:
         customer = entries[0]
         return customer
 
+    def get_customers_by_params(self, search: str):
+        if search:
+            search = search.strip()
+        customers = self._repository.get_customers_by_params(search)
+        return customers

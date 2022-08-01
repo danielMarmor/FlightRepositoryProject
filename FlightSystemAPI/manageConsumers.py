@@ -1,8 +1,10 @@
 import json
-import time
 from FlightSystemAPI.invokeRequests import InvokeRequests
 from business.services.genericService import GenericService
+from business.services.loggingService import FlightsLogger
+from common.not_mapped.DecimalEncoder import DecimalEncoder
 import pika
+import logging
 import threading
 import functools
 
@@ -17,6 +19,7 @@ class ManageConsumners:
         self.connection = pika.BlockingConnection(parameters);
         self.channel = self.connection.channel()
         self.invoke_requests = InvokeRequests(db_session)
+        self.logger = FlightsLogger.get_instance().Logger
 
     def init_consumers(self):
         # THREAD 1
@@ -54,63 +57,85 @@ class ManageConsumners:
         invoke_thread.start()
 
     def read_invoke(self, message):
-        msg_json = json.loads(message);
-        correlation_id = msg_json['correlation_id']
-        facade_name = msg_json['payload']['facade_name']
-        action_id = msg_json['payload']['action_id']
-        data = msg_json['payload']['data']
-        response = None
-        system_exeption = None
         try:
-            response = self.invoke_requests.invoke(facade_name, action_id, data)
-            system_exeption = None
-        except Exception as exc:
+            msg_json = json.loads(message);
+            correlation_id = msg_json['correlation_id']
+            facade_name = msg_json['payload']['facade_name']
+            action_id = msg_json['payload']['action_id']
+            data = msg_json['payload']['data']
             response = None
-            system_exeption = exc
-        serialize_response = GenericService.get_serialized_response(response)
-        serialized_exception = None if system_exeption is None else str(system_exeption)
-        response_body = {'correlation_id': correlation_id,
-                         'payload': serialize_response,
-                         'exception': serialized_exception
-                         }
-        self.async_response(self.publish_response, response_body=response_body)
-        # CALLBACK WRITE
+            system_exeption = None
+            try:
+                response = self.invoke_requests.invoke(facade_name, action_id, data)
+                system_exeption = None
+            except Exception as exc:
+                response = None
+                system_exeption = exc
+            serialize_response = GenericService.get_serialized_response(response)
+            serialized_exception = None if system_exeption is None else str(system_exeption)
+            response_body = {'correlation_id': correlation_id,
+                             'payload': serialize_response,
+                             'exception': serialized_exception
+                            }
+            self.async_response(self.publish_response, response_body=response_body)
+            # CALLBACK WRITE
+        except Exception as exc:
+            self.handle_unspecified_exc(exc, correlation_id)
 
     def write_callback(self, ch, method, properties, body):
         message = json.loads(body)
         self.write_invoke(message)
 
     def write_invoke(self, message):
-        correlation_id = message['correlation_id']
-        facade_name = message['payload']['facade_name']
-        action_id = message['payload']['action_id']
-        data = message['payload']['data']
-        response = None
-        system_exeption = None
         try:
-            response = self.invoke_requests.invoke(facade_name, action_id, data)
-            system_exeption = None
-        except Exception as exc:
+            msg_json = json.loads(message);
+            correlation_id = msg_json['correlation_id']
+            facade_name = msg_json['payload']['facade_name']
+            action_id = msg_json['payload']['action_id']
+            data = msg_json['payload']['data']
             response = None
-            system_exeption = exc
-        serialize_response = GenericService.get_serialized_response(response)
-        serialized_exception = None if system_exeption is None else str(system_exeption)
-        response_body = {'correlation_id': correlation_id,
-                         'payload': serialize_response,
-                         'exception': serialized_exception
-                         }
-        self.async_response(self.publish_response, response_body=response_body)
+            system_exeption = None
+            try:
+                response = self.invoke_requests.invoke(facade_name, action_id, data)
+                system_exeption = None
+            except Exception as exc:
+                response = None
+                system_exeption = exc
+            serialize_response = GenericService.get_serialized_response(response)
+            serialized_exception = None if system_exeption is None else str(system_exeption)
+            response_body = {'correlation_id': correlation_id,
+                            'payload': serialize_response,
+                            'exception': serialized_exception
+                            }
+            self.async_response(self.publish_response, response_body=response_body)
+        except Exception as exc:
+            self.handle_unspecified_exc(exc, correlation_id)
 
     def async_response(self, callback, *args, **kwargs):
         if self.connection.is_open:
             self.connection.add_callback_threadsafe(functools.partial(callback, *args, **kwargs))
 
     def publish_response(self, response_body):
-        message = json.dumps(response_body)
+        try:
+            message = json.dumps(response_body, default=GenericService.json_serial, cls=DecimalEncoder)
+            self.channel.basic_publish(exchange='',
+                                       routing_key=self.RENPONSE_QUEUE_NAME,
+                                       body=message)
+        except Exception as exc:
+            correlation_id = response_body['correlation_id']
+            self.handle_unspecified_exc(exc, correlation_id)
+
+    def handle_unspecified_exc(self, exc, correlation_id):
+        self.logger.log(logging.ERROR, f'publish_response: {str(exc)}')
+        internal_error = {'correlation_id': correlation_id,
+                          'payload': None,
+                          'exception': None,
+                          'server_internal_error': 1
+                          }
+        error_message = json.dumps(internal_error)
         self.channel.basic_publish(exchange='',
                                    routing_key=self.RENPONSE_QUEUE_NAME,
-                                   body=message)
-
+                                   body=error_message)
 
 
 

@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from business.services.airlineService import AirlineService
+import datetime
 from common.constants.enums import Actions, Field, Entity, Reason
 from common.exceptions.notFoundException import NotFoundException
 from common.exceptions.systemException import FlightSystemException
-from common.constants.settings import GENERAL_CLIENT_ERROR_MESSAGE, EMPTY_INPUT_CLIENT_MESSAGE, NOT_UNIQUE_CLIENT_MESSAGE
+from common.constants.settings import MinimumDate, MaximumDate ,\
+    GENERAL_CLIENT_ERROR_MESSAGE, EMPTY_INPUT_CLIENT_MESSAGE, NOT_UNIQUE_CLIENT_MESSAGE
 from common.exceptions.notValidInputException import NotVaildInputException
 from common.exceptions.notUniqueException import NotUniqueException
 from business.services.loggingService import FlightsLogger
@@ -44,10 +45,17 @@ class FacadeBase:
         except Exception as exc:
             self.handle_exception(Actions.GET_FLIGHT_BY_ID, exc)
 
-    def get_flights_by_parameters(self, origin_country_id, destination_country_id, date):
+    def get_flights_by_parameters(self, origin_country_id, destination_country_id, start_date, end_date):
         try:
-            self._airlineService.check_flight_params(origin_country_id, destination_country_id, date)
-            flights = self._airlineService.get_flights_by_params(origin_country_id, destination_country_id, date)
+            # self._airlineService.check_flight_params(origin_country_id, destination_country_id, start_date, end_date)
+            parse_start_date = None
+            if start_date is not None:
+                parse_start_date = datetime.datetime.strptime(start_date, '%d/%m/%Y')
+            parse_end_date = None
+            if end_date is not None:
+                parse_end_date = datetime.datetime.strptime(end_date, '%d/%m/%Y')
+            flights = self._airlineService.get_flights_by_params(origin_country_id, destination_country_id,
+                                                                 parse_start_date, parse_end_date)
             return flights
         except Exception as exc:
             self.handle_exception(Actions.GET_FLIGHT_BY_PARAMS, exc)

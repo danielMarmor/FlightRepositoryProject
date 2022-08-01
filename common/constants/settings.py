@@ -1,5 +1,5 @@
 from common.constants.enums import *
-
+import datetime
 # general
 EMPTY = ''
 
@@ -11,6 +11,10 @@ PASSWORD_MIN_LENGHT = 6
 USERNANE_MAX_LENGTH = 20
 PASSWORD_MAX_LENGTH = 20
 EMAIL_MAX_LENGTH = 50
+
+# dates
+MinimumDate = datetime.datetime(1, 1, 1)
+MaximumDate = datetime.datetime(9999, 12, 31)
 
 # messages
 GENERAL_CLIENT_ERROR_MESSAGE = 'We couldnt complete your request. please contact support'

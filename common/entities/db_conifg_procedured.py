@@ -21,7 +21,8 @@ def load_db_scripts():
         os.path.join(ROOT_DIR, 'common/store_procedures/get_flights_by_customer.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/remove_airline.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/remove_customer.sql'),
-        os.path.join(ROOT_DIR, 'common/store_procedures/remove_administrator.sql')
+        os.path.join(ROOT_DIR, 'common/store_procedures/remove_administrator.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_customers_by_params.sql')
     ]
 
     for file in script_files_list:

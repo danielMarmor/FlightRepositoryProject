@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, BigInteger, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, BigInteger, Integer, Numeric, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from common.entities.db_config import Base
 from common.entities.Country import Country
@@ -18,6 +18,7 @@ class Flight(Base):
     departure_time = Column(DateTime, nullable=False)
     landing_time = Column(DateTime, nullable=False)
     remaining_tickets = Column(Integer, nullable=False)
+    price = Column(Numeric(18, 2), nullable=False)
 
     airline_company = relationship('AirlineCompany', backref=backref('flights', uselist=True))
     origin_country = relationship(Country, foreign_keys=[origin_country_id], backref=backref('origin_flights',  uselist=True))
@@ -27,13 +28,13 @@ class Flight(Base):
         return f'<Flight>: id:{self.id} airline_company_id:{self.airline_company_id} origin_country_id:' \
                f'{self.origin_country_id} destination_country_id:{self.destination_country_id} ' \
                f'departure_time:{self.departure_time} landing_time:{self.landing_time} ' \
-               f'remaining_tickets:{self.remaining_tickets}'
+               f'price:{self.price} remaining_tickets:{self.remaining_tickets}'
 
     def __repr__(self):
         return f'<Flight>: id:{self.id} airline_company_id:{self.airline_company_id} origin_country_id:' \
                f'{self.origin_country_id} destination_country_id:{self.destination_country_id} ' \
                f'departure_time:{self.departure_time} landing_time:{self.landing_time} ' \
-               f'remaining_tickets:{self.remaining_tickets}'
+               f'price:{self.price} remaining_tickets:{self.remaining_tickets}'
 
     def __eq__(self, other):
         if not isinstance(other, Flight):
@@ -49,10 +50,17 @@ class Flight(Base):
     def serialize(self):
         data = {'id': self.id,
                 'airline_company_id': self.airline_company_id,
+                'airline_company_name': self.airline_company.name,
+                'airline_company_image_url': self.airline_company.image_url,
                 'origin_country_id': self.origin_country_id,
+                'origin_country_name': self.origin_country.name,
+                'origin_country_port_abrr': self.origin_country.airport_abbr,
                 'destination_country_id': self.destination_country_id,
+                'destination_country_name': self.destination_country.name,
+                'destination_country_port_abrr': self.destination_country.airport_abbr,
                 'departure_time': str(self.departure_time),
                 'landing_time': str(self.landing_time),
+                'price': str(self.price),
                 'remaining_tickets': self.remaining_tickets
                 }
         return data

@@ -107,7 +107,8 @@ class Actions(IntEnum):
     GET_FLIGHT_BY_AIRLINE = 26,
     GET_AIRLINES_BY_PARAMS = 27,
     GET_ALL_USERS = 28,
-    GET_TICKETS_BY_USER = 29
+    GET_TICKETS_BY_USER = 29,
+    GET_CUSTOMERS_BY_PARAMS = 30
 
 
 class TicketBalanceOperation(IntEnum):

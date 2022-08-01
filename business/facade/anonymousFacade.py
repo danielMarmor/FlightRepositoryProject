@@ -87,35 +87,47 @@ class AnonymousFacade(FacadeBase):
             self._loginService.validate_new_user(user)
             self._customerService.validate_customer(customer)
             self._customerService.add_customer(customer, user)
+            token = self.login(user.username, user.password)
+            return token
         except Exception as exc:
             self.handle_exception(Actions.ADD_CUSTOMER, exc)
 
-    # def add_customer(self, customer, user):
-    #     try:
-    #         # CREATE USER
-    #         user = user.adapt_str()
-    #         self.create_user(user)
-    #         customer.adapt_str()
-    #         customer.user_id = user.id
-    #         # OK - CREATE CUSTOMER
-    #         self._customerService.validate_customer(customer)
-    #         self._customerService.add_customer(customer)
-    #     except Exception as exc:
-    #         self.handle_exception(Actions.ADD_CUSTOMER, exc)
+    def add_airline(self, airline, user):
+        # validate
+        try:
+            # CREATE USER
+            user = user.adapt_str()
+            airline.adapt_str()
+            self._loginService.validate_new_user(user)
+            self._airlineService.validate_airline(airline)
+            self._airlineService.add_airline(airline, user)
+            token = self.login(user.username, user.password)
+            return token
+        except Exception as exc:
+            self.handle_exception(Actions.ADD_AIRLINE, exc)
 
     # FILTER EXCEPTION BEFORE SHOWING MESSAGE TO USER - RAISE ALWAYS FlightSystemException
     def handle_exception(self, action, exception: Exception):
         # first -check basefacede(super) actions
         super().handle_exception(action, exception)
+
         # match case by anonymusfacade actions
         if isinstance(exception, NotVaildInputException):
             raise FlightSystemException(EMPTY_INPUT_CLIENT_MESSAGE, exception)
+
         elif isinstance(exception, NotValidLoginException):
             raise FlightSystemException(LOGIN_FAILED_CLIENT_MESSAGE, exception)
+
+        elif isinstance(exception, NotFoundException):
+            logger.log(logging.ERROR,
+                       f'{str(exception)}, entity={exception.entity} entity_id={exception.entity_id}')
+            raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
+
         elif isinstance(exception, NotUniqueException):
             logger.log(logging.ERROR,
                 f'{str(exception)}, field_name={exception.field_name} reuqested_value={exception.reuqested_value}')
             raise FlightSystemException(NOT_UNIQUE_CLIENT_MESSAGE, exception)
+
         else:  # PYTHON EXCEPTION (NOT CUSTOMED)-  GENERAL MESSAGE ERROR
              logger.log(logging.ERROR, f'{str(exception)}')
              raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)

@@ -1,7 +1,6 @@
 from common.entities.Flight import Flight
 from business.services.validationService import ValidationService
 from common.entities.AirlineCompany import AirlineCompany
-from datetime import datetime, timedelta
 from common.constants.enums import Entity, Reason, Field, Actions, TicketBalanceOperation
 from common.exceptions.notValidInputException import NotVaildInputException
 from common.exceptions.notValidFlightException import NotValidFlightException
@@ -11,9 +10,15 @@ from common.entities.Administrator import Administrator
 from business.services.loginService import LoginService
 from common.exceptions.notFoundException import NotFoundException
 from common.exceptions.notUniqueException import NotUniqueException
+from sqlalchemy.sql.operators import is_
+from sqlalchemy import or_, and_
+
 
 
 class AirlineService:
+    ALL = -1
+    ALL_STR = '-1'
+
     def __init__(self, local_session, repository):
         self.login_service = LoginService(local_session, repository)
         self._repository = repository
@@ -36,42 +41,26 @@ class AirlineService:
         return flights
 
     def get_airlines_by_parameters(self, country_id, name):
-        search_name = '%{}%'.format(name)
-        airlines_cond = (lambda query: query.filter(AirlineCompany.country_id == country_id,
-                                                    AirlineCompany.name.like(search_name)))
+        serach_country_id = self.ALL if country_id is None else country_id
+        search_name = self.ALL_STR if name is None else '%{}%'.format(name)
+        airlines_cond = (lambda query: query.filter(
+                and_(or_(serach_country_id == self.ALL, AirlineCompany.country_id == country_id),
+                     or_(search_name == self.ALL_STR, AirlineCompany.name.like(search_name)))))
         airlines = self._repository.get_all_by_condition(AirlineCompany, airlines_cond)
         return airlines
 
-    # def get_flights_by_airline(self, airline_id):
-    #     airline = self.get_airline_by_id(airline_id)
-    #     if airline is None:
-    #         raise NotFoundException('Airline Not Found', Entity.AIRLINE_COMPANY, airline_id)
-    #     flight_airline_cond = (lambda query: query.filter(Flight.airline_company_id == airline_id))
-    #     flights = self._repository.get_all_by_condition(Flight, flight_airline_cond)
-    #     return flights
-
-    def get_flights_by_params(self, origin_country_id, dest_country_id, date):
-        flights = self._repository.get_flights_by_parameters(origin_country_id, dest_country_id, date)
+    def get_flights_by_params(self, origin_country_id, dest_country_id, start_date, end_date):
+        flights = self._repository.get_flights_by_parameters(origin_country_id, dest_country_id, start_date, end_date)
         return flights
 
-    # def get_flights_by_params(self, origin_country_id, dest_country_id, date):
-    #     start_date = datetime.strptime(date, '%d/%m/%Y')
-    #     end_date = start_date + timedelta(days=1)
-    #     # filter
-    #     flights_filter = (lambda query: query.filter(
-    #         Flight.origin_country_id == origin_country_id,
-    #         Flight.destination_country_id == dest_country_id,
-    #         Flight.departure_time >= start_date,
-    #         Flight.departure_time < end_date))
-    #
-    #     flights = self._repository.get_all_by_condition(Flight, flights_filter)
-    #     return flights
-
     @staticmethod
-    def check_flight_params(origin_country_id, dest_country_id, date):
-        is_valid_date = ValidationService.validate_date(date)
+    def check_flight_params(origin_country_id, dest_country_id, start_date, end_date):
+        is_valid_date = ValidationService.validate_date(start_date)
         if not is_valid_date:
-            raise NotVaildInputException('Not Valid Date', Reason.NOT_VALID_DATE, Field.FLIGHT_DEPARTURE_DATE)
+            raise NotVaildInputException('Not Valid Start Date', Reason.NOT_VALID_DATE, Field.FLIGHT_DEPARTURE_DATE)
+        is_valid_date = ValidationService.validate_date(end_date)
+        if not is_valid_date:
+            raise NotVaildInputException('Not Valid End Date', Reason.NOT_VALID_DATE, Field.FLIGHT_LANDING_DATE)
 
     def get_all_airlines(self):
         airlines = self._repository.get_all(AirlineCompany)
@@ -158,9 +147,8 @@ class AirlineService:
     def add_airline(self, airline, user):
         self._repository.add_airline(airline, user)
 
-    def update_airline(self, airline_id, airline):
-        airline_data_fliter = {'name': airline.name, 'country_id': airline.country_id}
-        self._repository.update(AirlineCompany, 'id', airline_id, airline_data_fliter)
+    def update_airline(self, user_id, user, airline_id, airline):
+        self._repository.update_airline(user_id, user, airline_id, airline)
 
     def remove_airline(self, airline_id):
         airline = self.get_airline_by_id(airline_id)

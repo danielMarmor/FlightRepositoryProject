@@ -61,21 +61,34 @@ class AdministratorFacade(FacadeBase):
             self._loginService.validate_new_user(user)
             self._airlineService.validate_airline(airline)
             self._airlineService.add_airline(airline, user)
+            return airline
         except Exception as exc:
             self.handle_exception(Actions.ADD_AIRLINE, exc)
 
-    # def add_airline(self, airline, user):
-    #     # validate
-    #     try:
-    #         # CREATE USER
-    #         user = user.adapt_str()
-    #         self.create_user(user)
-    #         airline.adapt_str()
-    #         airline.user_id = user.id
-    #         self._airlineService.validate_airline(airline)
-    #         self._airlineService.add_airline(airline)
-    #     except Exception as exc:
-    #         self.handle_exception(Actions.ADD_AIRLINE, exc)
+    def update_airline(self, airline_id, airline, user):
+        try:
+            airline.adapt_str()
+            airline_company = self.get_airline_by_id(airline_id)
+            user_id = airline_company.user_id
+            # self.validate_token(airline_company.id, Actions.UPDATE_AIRLINE)
+            airline.id = airline_id
+            airline.user_id = user_id
+            self._loginService.validate_update_user(user_id, user)
+            self._airlineService.validate_airline(airline)
+            self._airlineService.update_airline(user_id, user, airline_id, airline)
+        except Exception as exc:
+            self.handle_exception(Actions.UPDATE_AIRLINE, exc)
+
+    def get_customers_by_params(self, search_name):
+        try:
+            customers = self._customerService.get_customers_by_params(search_name)
+            return customers
+        except Exception as exc:
+            self.handle_exception(Actions.GET_CUSTOMERS_BY_PARAMS, exc)
+
+    def get_customers_by_id(self, customer_id):
+        customer = self._customerService.get_customer_by_id(customer_id)
+        return customer
 
     def add_customer(self, customer, user):
         try:
@@ -86,21 +99,25 @@ class AdministratorFacade(FacadeBase):
             self._loginService.validate_new_user(user)
             self._customerService.validate_customer(customer)
             self._customerService.add_customer(customer, user)
+            return customer
         except Exception as exc:
             self.handle_exception(Actions.ADD_CUSTOMER, exc)
 
-    # def add_customer(self, customer, user):
-    #     try:
-    #         # CREATE USER
-    #         user = user.adapt_str()
-    #         self.create_user(user)
-    #         customer.adapt_str()
-    #         customer.user_id = user.id
-    #         # OK - CREATE CUSTOMER
-    #         self._customerService.validate_customer(customer)
-    #         self._customerService.add_customer(customer)
-    #     except Exception as exc:
-    #         self.handle_exception(Actions.ADD_CUSTOMER, exc)
+    def update_customer(self, customer_id, customer, user):
+        try:
+            customer.adapt_str()
+            exist_customer = self.get_customer_by_id(customer_id)
+            if exist_customer is None:
+                raise NotFoundException('Customer Not Found', Entity.CUSTOMER, customer_id)
+            user_id = exist_customer.user_id
+            customer.id = customer_id
+            customer.user_id = user_id
+            # self.validate_token(customer_id, Actions.UPDATE_CUSTOMER)
+            self._loginService.validate_update_user(user_id, user)
+            self._customerService.validate_customer(customer)
+            self._customerService.update_customer(user_id, user, customer_id, customer)
+        except Exception as exc:
+            self.handle_exception(Actions.UPDATE_CUSTOMER, exc)
 
     def remove_airline(self, airline_id):
         try:
@@ -125,6 +142,7 @@ class AdministratorFacade(FacadeBase):
             self._loginService.validate_new_user(user)
             self._airlineService.validate_administrator(administrator)
             self._airlineService.add_administrator(administrator, user)
+            return administrator
         except Exception as exc:
             self.handle_exception(Actions.ADD_ADMINISTRATOR, exc)
 
