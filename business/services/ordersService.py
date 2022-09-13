@@ -19,7 +19,7 @@ class OrdersService:
         cross_flights = self._repository.get_customer_cross_flight(customer.id, flight.id)
         if len(cross_flights) > 0:
             cross_flight = cross_flights[0]
-            raise NotValidOrderException('detected customer overllped timed cross flight', Reason.CROSS_FLIGHT)
+            raise NotValidOrderException('You Have another flight on the same time!', Reason.CROSS_FLIGHT)
         # check if flight already departured
         order_date = datetime.now()
         departure_date = flight.departure_time
@@ -29,7 +29,7 @@ class OrdersService:
         # check if availiavle tickets
         availiable_tickets = flight.remaining_tickets
         if availiable_tickets <= 0:
-            raise NotValidOrderException('flight is sold out', Reason.FLIGHT_SOLD_OUT)
+            raise NotValidOrderException('Flight is sold out!', Reason.FLIGHT_SOLD_OUT)
 
     def check_cancel_order(self, ticket):
         flight = self.get_flight_by_id(ticket.flight_id)
@@ -54,6 +54,11 @@ class OrdersService:
 
     def get_tickets_by_customer(self, customer_id):
         tickets = self._repository.get_tickets_by_customer(customer_id)
+        return tickets
+
+    def get_tickets_by_flight(self, flight_id):
+        condition = (lambda query: query.filter(Ticket.flight_id == flight_id))
+        tickets = self._repository.get_all_by_condition(Ticket, condition)
         return tickets
 
     def get_ticket_by_customer_fligth(self, flight_id, customer_id):

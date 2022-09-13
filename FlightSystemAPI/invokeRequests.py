@@ -92,7 +92,7 @@ class InvokeRequests:
                 airline = AirlineCompany(id=data['airline']['id'],
                                          name=data['airline']['name'],
                                          country_id=data['airline']['country_id'],
-                                         image_url=data['airline']['image_url'],
+                                         iata=data['airline']['iata'],
                                          user_id=data['airline']['user_id'])
                 response = facade.add_airline(airline, user)
 
@@ -105,9 +105,10 @@ class InvokeRequests:
         return response
 
     def invoke_admin(self, action_id, data):
-        token = IdentityToken(data['token']['user_name'],
-                              data['token']['user_role_id'],
-                              data['token']['identity_id'])
+        token = None
+        # token = IdentityToken(data['token']['user_name'],
+        #                       data['token']['user_role_id'],
+        #                       data['token']['identity_id'])
         facade = AdministratorFacade(self.db_session, token)
         response = None
         match action_id:
@@ -200,7 +201,7 @@ class InvokeRequests:
                 airline = AirlineCompany(id=data['airline']['id'],
                                          name=data['airline']['name'],
                                          country_id=data['airline']['country_id'],
-                                         image_url=data['airline']['image_url'],
+                                         iata=data['airline']['iata'],
                                          user_id=data['airline']['user_id'])
                 new_airline = facade.add_airline(airline, user)
                 response = new_airline
@@ -215,10 +216,14 @@ class InvokeRequests:
                 airline = AirlineCompany(id=data['airline']['id'],
                                          name=data['airline']['name'],
                                          country_id=data['airline']['country_id'],
-                                         image_url=data['airline']['image_url'],
+                                         iata=data['airline']['iata'],
                                          user_id=data['airline']['user_id'])
                 facade.update_airline(airline_id, airline, user)
                 response = {'success': 'OK'}
+
+            case Actions.GET_ADMINISTRATOR_BY_ID:
+                administrator_id = data['administrator_id']
+                response = facade.get_administrator_by_id(administrator_id)
 
             case Actions.REMVOE_AIRLINE:
                 airline_id = data['airline_id']
@@ -234,14 +239,88 @@ class InvokeRequests:
                 admin = Administrator(id=data['administrator']['id'],
                                          first_name=data['administrator']['first_name'],
                                          last_name=data['administrator']['last_name'],
-                                         user_id=data['administrator']['user_id'])
+                                         user_id=data['administrator']['user_id'],
+                                         image_url = data['administrator']['image_url'])
                 new_admin = facade.add_administrator(admin, user)
                 response = new_admin
+
+            case Actions.UPDATE_ADMINISTRATOR:
+                administrator_id =  data['administrator_id']
+                user = User(id=data['user']['id'],
+                            username=data['user']['username'],
+                            password=data['user']['password'],
+                            email=data['user']['email'],
+                            user_role=data['user']['user_role'])
+                admin = Administrator(id=data['administrator']['id'],
+                                      first_name=data['administrator']['first_name'],
+                                      last_name=data['administrator']['last_name'],
+                                      user_id=data['administrator']['user_id'],
+                                      image_url = data['administrator']['image_url'])
+                admin_data = facade.update_administrator(administrator_id, admin, user)
+                response = admin_data
+
+            case Actions.UPDATE_ADMINISTRATOR_BY_PEER:
+                administrator_id = data['administrator_id']
+                user = User(id=data['user']['id'],
+                            username=data['user']['username'],
+                            password=data['user']['password'],
+                            email=data['user']['email'],
+                            user_role=data['user']['user_role'])
+                admin = Administrator(id=data['administrator']['id'],
+                                      first_name=data['administrator']['first_name'],
+                                      last_name=data['administrator']['last_name'],
+                                      user_id=data['administrator']['user_id'],
+                                      image_url=data['administrator']['image_url'])
+                admin_data = facade.update_administrator(administrator_id, admin, user)
+                response = admin_data
 
             case Actions.REMOVE_ADMINISTRATOR:
                 administrator_id = data['administrator_id']
                 facade.remove_administrator(administrator_id)
                 response = {'success': 'OK'}
+
+            case Actions.GET_CUSTOMERS_BUSINNES_DATA:
+                search = data['search']
+                response = facade.get_customers_bussines_data(search)
+
+            case Actions.GET_AIRLINES_BUSINNES_DATA:
+                search = data['search']
+                response = facade.get_airlines_bussines_data(search)
+
+            case Actions.GET_ADMINISTRATORS_BY_PARAMS:
+                search = data['search']
+                response = facade.get_administrators_by_params(search)
+
+            case Actions.GET_SALES_DAILY_DATA:
+                start_date = data['start_date']
+                end_date = data['end_date']
+                destination_country_id = data['destination_country_id']
+                response = facade.get_daily_sales_data(start_date, end_date, destination_country_id);
+
+            case Actions.GET_PURCHASES_BY_CUSTOMERS:
+                start_date = data['start_date']
+                end_date = data['end_date']
+                destination_country_id = data['destination_country_id']
+                response = facade.get_purchases_by_customers(start_date, end_date, destination_country_id);
+
+            case Actions.GET_SALES_BY_AIRLINES:
+                start_date = data['start_date']
+                end_date = data['end_date']
+                destination_country_id = data['destination_country_id']
+                response = facade.get_sales_by_airlines(start_date, end_date, destination_country_id);
+
+            case Actions.GET_COUNT_FLIGHTS:
+                start_date = data['start_date']
+                end_date = data['end_date']
+                destination_country_id = data['destination_country_id']
+                response = facade.get_count_flights(start_date, end_date, destination_country_id);
+
+            case Actions.GET_CAPACITIES_UTIL:
+                start_date = data['start_date']
+                end_date = data['end_date']
+                destination_country_id = data['destination_country_id']
+                response = facade.get_capacities_util(start_date, end_date, destination_country_id);
+
         return response
 
     def invoke_airline(self, action_id, data):
@@ -294,7 +373,7 @@ class InvokeRequests:
                 airline = AirlineCompany(id=data['airline']['id'],
                                          name=data['airline']['name'],
                                          country_id=data['airline']['country_id'],
-                                         image_url=data['airline']['image_url'],
+                                         iata=data['airline']['iata'],
                                          user_id=data['airline']['user_id'])
                 token = facade.update_airline(airline_id, airline, user)
                 response = token
@@ -313,7 +392,9 @@ class InvokeRequests:
                                     data['flight']['landing_hour'],
                                     data['flight']['landing_minute'], '/'),
                                 price=data['flight']['price'],
-                                remaining_tickets=data['flight']['remaining_tickets'])
+                                remaining_tickets=data['flight']['remaining_tickets'],
+                                distance=data['flight']['distance'],
+                                num_seats=data['flight']['num_seats'])
                 new_flight = facade.add_flight(flight)
                 response = new_flight
 
@@ -332,7 +413,9 @@ class InvokeRequests:
                                     data['flight']['landing_hour'],
                                     data['flight']['landing_minute'], '/'),
                                 price=data['flight']['price'],
-                                remaining_tickets=data['flight']['remaining_tickets'])
+                                remaining_tickets=data['flight']['remaining_tickets'],
+                                distance=data['flight']['distance'],
+                                num_seats=data['flight']['num_seats'])
                 facade.update_flight(flight_id, flight)
                 response ={'success': 'OK'}
             case Actions.REMOVE_FLIGHT:
@@ -377,6 +460,10 @@ class InvokeRequests:
             case Actions.GET_ALL_COUNTRIES:
                 response = facade.get_all_countries()
 
+            case Actions.GET_CUSTOMER_BY_ID:
+                customer_id = data['customer_id']
+                response = facade.get_customer_by_id(customer_id)
+
             case Actions.UPDATE_CUSTOMER:
                 customer_id = data['customer_id']
                 user = User(id=data['user']['id'],
@@ -395,11 +482,26 @@ class InvokeRequests:
                 token = facade.update_customer(customer_id, customer, user)
                 response = token
 
+            case Actions.CHECK_TICKET:
+                 ticket = Ticket(
+                    flight_id=data['ticket']['flight_id'],
+                    customer_id=data['ticket']['customer_id'],
+                    position=data['ticket']['position']
+                    )
+                 flight = facade.get_flight_by_id(ticket.flight_id)
+                 ticket.price = flight.price
+                 can_order_ticket = facade.check_ticket(ticket)
+                 response = can_order_ticket
+
             case Actions.ADD_TICKET:
                 ticket = Ticket(
                     flight_id=data['ticket']['flight_id'],
-                    customer_id=data['ticket']['customer_id']
+                    customer_id=data['ticket']['customer_id'],
+                    position=data['ticket']['position']
                 )
+                flight=facade.get_flight_by_id(ticket.flight_id)
+                ticket.price =flight.price
+
                 new_ticket = facade.add_ticket(ticket)
                 response = new_ticket
 
@@ -411,6 +513,10 @@ class InvokeRequests:
             case Actions.GET_TICKETS_BY_CUSTOMER:
                 customer_id = data['customer_id']
                 response = facade.get_my_tickets(customer_id)
+
+            case Actions.GET_TICKETS_BY_FLIGHT:
+                flight_id = data['flight_id']
+                response = facade.get_tickets_by_flight(flight_id)
         return response
 
 

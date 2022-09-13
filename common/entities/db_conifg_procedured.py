@@ -8,7 +8,7 @@ from sqlalchemy import text
 def load_db_scripts():
     repo = FilghtRepository(local_session)
     script_files_list = [
-        os.path.join(ROOT_DIR, 'common/store_procedures/get_airline_by_username.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_airline_comp_by_username.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/get_arrival_flights.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/get_cusotmer_by_username.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/get_departure_flights.sql'),
@@ -22,7 +22,15 @@ def load_db_scripts():
         os.path.join(ROOT_DIR, 'common/store_procedures/remove_airline.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/remove_customer.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/remove_administrator.sql'),
-        os.path.join(ROOT_DIR, 'common/store_procedures/get_customers_by_params.sql')
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_customers_by_params.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_customers_bussines_data.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_airlines_bussines_data.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_administrators_by_params.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_daily_sales_data.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_purchases_by_customers.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_sales_by_airlines.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_count_flights.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/get_capacities_util.sql')
     ]
 
     for file in script_files_list:
@@ -32,4 +40,6 @@ def load_db_scripts():
         repo.execute_script(script)
 
     local_session.commit()
+
+
 

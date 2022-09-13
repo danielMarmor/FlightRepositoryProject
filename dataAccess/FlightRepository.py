@@ -10,6 +10,7 @@ from common.entities.Ticket import Ticket
 from common.entities.Flight import Flight
 from common.entities.User import User
 from common.entities.AirlineCompany import AirlineCompany
+from common.entities.Administrator import Administrator
 from sqlalchemy import text
 from datetime import datetime, timedelta
 from common.entities.Country import Country
@@ -44,7 +45,7 @@ class FilghtRepository:
         try:
             entry = self.local_session.query(table_class).get(entry_id)
             # SUCCEDED
-            self.logger.log(logging.INFO, f'get_by_id: {str(entry)}')
+            # self.logger.log(logging.INFO, f'get_by_id: {str(entry)}')
             return entry
         except Exception as ex:
             self.logger.log(logging.ERROR, f'get_by_id: {str(ex)}')
@@ -55,7 +56,7 @@ class FilghtRepository:
         try:
             entries = self.local_session.query(table_class).all()
             # SUCCEDED
-            self.logger.log(logging.INFO, f'get_all: {str(entries)}')
+            # self.logger.log(logging.INFO, f'get_all: {str(entries)}')
             return entries
         except Exception as ex:
             self.logger.log(logging.ERROR, f'get_all: {str(ex)}')
@@ -67,7 +68,7 @@ class FilghtRepository:
             query = self.local_session.query(table_class)
             entries = filter(condition, query).all()
             # SECCEDED
-            self.logger.log(logging.INFO, f'get_all_by_condition: {str(entries)}')
+            # self.logger.log(logging.INFO, f'get_all_by_condition: {str(entries)}')
             return entries
         except Exception as ex:
             self.logger.log(logging.ERROR, f'get_all_by_condition: {str(ex)}')
@@ -79,7 +80,7 @@ class FilghtRepository:
             query = self.local_session.query(table_class)
             entries = condition(query).all()
             # SECCEDED
-            self.logger.log(logging.INFO, f'get_all_by_condition: {str(entries)}')
+            # self.logger.log(logging.INFO, f'get_all_by_condition: {str(entries)}')
             return entries
         except Exception as ex:
             self.logger.log(logging.ERROR, f'get_all_by_condition: {str(ex)}')
@@ -277,7 +278,7 @@ class FilghtRepository:
             updated_data_filter = {'remaining_tickets': remaining_tickets}
             self.update(Flight, 'id', ticket.flight_id, updated_data_filter)
             self.local_session.commit()
-            self.logger.log(logging.INFO, f'add_ticket: {ticket}')
+            # self.logger.log(logging.INFO, f'add_ticket: {ticket}')
         except Exception as ex:
             self.local_session.rollback()
             self.logger.log(logging.ERROR, f'remove_all_by_condition: {str(ex)}')
@@ -345,7 +346,7 @@ class FilghtRepository:
             airline_updated_data = {
                 'name': airline.name,
                 'country_id': airline.country_id,
-                'image_url': airline.image_url
+                'iata': airline.iata
             }
             user_entry = self.local_session.query(User).filter(getattr(User, "id") == user_id)
             user_entry.update(user_updated_data)
@@ -359,12 +360,36 @@ class FilghtRepository:
             self.logger.log(logging.ERROR, f'update_airline: {str(ex)}')
             raise ex
 
+    def update_administrator(self, user_id, user, administrator_id,  administrator):
+        try:
+            user_updated_data = {
+                'username': user.username,
+                'password': user.password,
+                'email': user.email
+            }
+            admin_updated_data = {
+                'first_name': administrator.first_name,
+                'last_name': administrator.last_name,
+                'image_url': administrator.image_url
+            }
+            user_entry = self.local_session.query(User).filter(getattr(User, "id") == user_id)
+            user_entry.update(user_updated_data)
+
+            admin_entry = self.local_session.query(Administrator).filter(getattr(Administrator, "id") == administrator_id)
+            admin_entry.update(admin_updated_data)
+            self.local_session.commit()
+            self.logger.log(logging.INFO, f'update_administrator: {administrator_id}')
+        except Exception as ex:
+            self.local_session.rollback()
+            self.logger.log(logging.ERROR, f'update_administrator: {str(ex)}')
+            raise ex
+
     def get_customer_cross_flight(self, customer_id, new_flight_id):
         try:
             stmt = text('select * from get_overlapped_filghts(:_customer_id, :_new_flight_id)') \
                 .bindparams(_customer_id=customer_id, _new_flight_id=new_flight_id)
             flight_entries = self.local_session.execute(stmt).all()
-            self.logger.log(logging.INFO, f'get_customer_cross_flight: {flight_entries}')
+            # self.logger.log(logging.INFO, f'get_customer_cross_flight: {flight_entries}')
             return flight_entries
         except Exception as ex:
             self.logger.log(logging.ERROR, f'remove_all_by_condition: {str(ex)}')
@@ -430,7 +455,7 @@ class FilghtRepository:
                 .join(Country, Flight.destination_country_id == Country.id) \
                 .join(AirlineCompany, Flight.airline_company_id == AirlineCompany.id) \
                 .filter(Customer.id == customer_id) \
-                .with_entities(Flight.id, AirlineCompany.name, AirlineCompany.image_url, Country.name, Flight.departure_time, Flight.landing_time).all()
+                .with_entities(Flight.id, AirlineCompany.name, AirlineCompany.iata, Country.name, Flight.departure_time, Flight.landing_time).all()
             self.logger.log(logging.INFO, f'get_flights_by_customer: {customer_flights}')
             return customer_flights
         except Exception as ex:
@@ -445,18 +470,36 @@ class FilghtRepository:
             self.logger.log(logging.INFO, f'get_customer_by_username: {customer}')
             return customer
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_customer_by_username: {str(ex)}')
             raise ex
 
     def get_airline_by_username(self, username):
         try:
-            stmt = text('select * from get_airline_by_username(:_username)') \
+            stmt = text('select * from get_airline_comp_by_username(:_username)') \
                 .bindparams(_username=username)
             airline = self.local_session.execute(stmt).first()
             self.logger.log(logging.INFO, f'get_airline_by_username: {airline}')
             return airline
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_airline_by_username: {str(ex)}')
+            raise ex
+
+    def get_customer_by_id(self, customer_id):
+        try:
+            customers = self.local_session.query(Customer) \
+            .join(User, Customer.user_id == User.id) \
+            .filter(Customer.id == customer_id) \
+            .with_entities(User.username, User.password, User.email, Customer.first_name, \
+                           Customer.last_name, Customer.address, Customer.phone_number, \
+                           Customer.credit_card_number).all()
+            if len(customers) == 0:
+                return None
+            customer = customers[0]
+            return customer
+        except Exception as ex:
+            self.logger.log(logging.ERROR, f'get_customer_by_id: {str(ex)}')
             raise ex
 
     def get_administrator_by_username(self, username):
@@ -467,6 +510,7 @@ class FilghtRepository:
             self.logger.log(logging.INFO, f'get_administrator_by_username: {administrator}')
             return administrator
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_administrator_by_username: {str(ex)}')
             raise ex
 
@@ -478,6 +522,7 @@ class FilghtRepository:
             self.logger.log(logging.INFO, f'get_user_by_username: {user}')
             return user
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_user_by_username: {str(ex)}')
             raise ex
 
@@ -491,7 +536,7 @@ class FilghtRepository:
             flights = [{'flight_id': res[0],
                         'airline_company_id': res[1],
                         'airline_company_name': res[2],
-                        'airline_company_img_url': res[3],
+                        'airline_iata': res[3],
                         'origin_country_id': res[4],
                         'origin_country_name': res[5],
                         'origin_country_airport_abbr': res[6],
@@ -501,12 +546,56 @@ class FilghtRepository:
                         'departure_time': res[10],
                         'landing_time': res[11],
                         'price': float(res[12]),
-                        'remaining_tickets': res[13]
+                        'remaining_tickets': res[13],
+                        'num_seats': res[14]
                         } for res in results]
-            self.logger.log(logging.INFO, f'get_flights_by_parameters: {flights}')
+            # self.logger.log(logging.INFO, f'get_flights_by_parameters: {flights}')
             return flights
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_flights_by_parameters: {str(ex)}')
+            raise ex
+
+    def get_customers_bussines_data(self, search):
+        try:
+            stmt = text(f'select * from get_customers_bussines_data(:_search)').bindparams(_search=search)
+            results = self.local_session.execute(stmt).all()
+            customers = [{'id': res[0],
+                          'first_name': res[1],
+                          'last_name': res[2],
+                          'image_url': res[3],
+                          'last_activity_date': res[4],
+                          'email': res[5],
+                          'address': res[6],
+                          'phone_number': res[7],
+                          'num_tickets': res[8],
+                          'total_purchases': float(res[9])
+                        } for res in results]
+            # self.logger.log(logging.INFO, f'get_customers_bussines_data: {customers}')
+            return customers
+        except Exception as ex:
+            self.local_session.rollback()
+            self.logger.log(logging.ERROR, f'get_customers_bussines_data: {str(ex)}')
+            raise ex
+
+    def get_airlines_bussines_data(self, search):
+        try:
+            stmt = text(f'select * from get_airlines_bussines_data(:_search)').bindparams(_search=search)
+            results = self.local_session.execute(stmt).all()
+            airlines = [{'id': res[0],
+                          'country_id': res[1],
+                          'name': res[2],
+                          'email': res[3],
+                          'iata': res[4],
+                          'last_activity_date': res[5],
+                          'num_flights': res[6],
+                          'sum_sales': res[7]
+                         } for res in results]
+            # self.logger.log(logging.INFO, f'get_airlines_bussines_data: {airlines}')
+            return airlines
+        except Exception as ex:
+            self.local_session.rollback()
+            self.logger.log(logging.ERROR, f'get_airlines_bussines_data: {str(ex)}')
             raise ex
 
     def get_flights_by_airline_id(self, airline_id):
@@ -517,7 +606,7 @@ class FilghtRepository:
             flights = [{'flight_id': res[0],
                         'airline_company_id': res[1],
                         'airline_company_name': res[2],
-                        'airline_company_img_url': res[3],
+                        'airline_iata': res[3],
                         'origin_country_id': res[4],
                         'origin_country_name': res[5],
                         'origin_country_airport_abbr': res[6],
@@ -527,11 +616,15 @@ class FilghtRepository:
                         'departure_time': res[10],
                         'landing_time': res[11],
                         'price': float(res[12]),
-                        'remaining_tickets': res[13]
+                        'num_seats': res[13],
+                        'distance': res[14],
+                        'remaining_tickets': res[15],
+                        'revenues': res[16]
                         } for res in results]
-            self.logger.log(logging.INFO, f'get_flights_by_airline_id: {flights}')
+           #  self.logger.log(logging.INFO, f'get_flights_by_airline_id: {flights}')
             return flights
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_flights_by_airline_id: {str(ex)}')
             raise ex
 
@@ -543,6 +636,7 @@ class FilghtRepository:
             self.logger.log(logging.INFO, f'get_departure_flights: {flights}')
             return flights
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_departure_flights: {str(ex)}')
             raise ex
 
@@ -554,6 +648,7 @@ class FilghtRepository:
             self.logger.log(logging.INFO, f'get_arrival_flights: {flights}')
             return flights
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_arrival_flights: {str(ex)}')
             raise ex
 
@@ -563,29 +658,115 @@ class FilghtRepository:
                 .bindparams(_customer_id=customer_id)
             results = self.local_session.execute(stmt).all()
             tickets = [{'ticket_id': res[0],
-                        'first_name': res[1],
-                        'last_name': res[2],
-                        'origin_country_name': res[3],
-                        'origin_country_airport_abbr': res[4],
-                        'destination_country_name': res[5],
-                        'dest_country_airport_abbr': res[6],
-                        'airline_company_id': res[7],
-                        'airline_company_name': res[8],
-                        'airline_company_img_url': res[9],
-                        'departure_time': res[10],
-                        'landing_time': res[11],
+                        'flight_id': res[1],
+                        'first_name': res[2],
+                        'last_name': res[3],
+                        'origin_country_name': res[4],
+                        'origin_country_airport_abbr': res[5],
+                        'destination_country_name': res[6],
+                        'dest_country_airport_abbr': res[7],
+                        'airline_company_id': res[8],
+                        'airline_company_name': res[9],
+                        'airline_iata': res[10],
+                        'departure_time': res[11],
+                        'landing_time': res[12],
+                        'seat': res[13],
+                        'price': res[14]
                         } for res in results]
-            self.logger.log(logging.INFO, f'get_flights_by_airline_id: {tickets}')
+            # self.logger.log(logging.INFO, f'get_flights_by_airline_id: {tickets}')
             return tickets
         except Exception as ex:
+            self.local_session.rollback()
             self.logger.log(logging.ERROR, f'get_flights_by_airline_id: {str(ex)}')
             raise ex
 
+    def get_count_flights(self, start_date, end_date, destination_country_id):
+        try:
+            stmt = text('select * from get_count_flights(:_start_date, :_end_date, :_destination_country_id)') \
+                .bindparams(_start_date=start_date, _end_date=end_date, _destination_country_id=destination_country_id)
+            results = self.local_session.execute(stmt).all()
+            count_flights = [{'country_id': res[0],
+                              'country_name': res[1],
+                              'count_flights': res[2]
+                        } for res in results]
+            # self.logger.log(logging.INFO, f'get_count_flights: {count_flights}')
+            return count_flights
+        except Exception as ex:
+            self.local_session.rollback()
+            self.logger.log(logging.ERROR, f'get_count_flights: {str(ex)}')
+            raise ex
+
+    def get_purchases_by_customers(self, start_date, end_date, destination_country_id):
+        try:
+            stmt = text('select * from get_purchases_by_customers(:_start_date, :_end_date, :_destination_country_id)') \
+                .bindparams(_start_date=start_date, _end_date=end_date, _destination_country_id=destination_country_id)
+            results = self.local_session.execute(stmt).all()
+            purchases = [{'customer_id': res[0],
+                          'customer_name': res[1],
+                          'count_tickets': res[2],
+                          'sum_purchases': res[3]
+                        } for res in results]
+            # self.logger.log(logging.INFO, f'get_purchases_by_customers: {purchases}')
+            return purchases
+        except Exception as ex:
+            self.local_session.rollback()
+            self.logger.log(logging.ERROR, f'get_purchases_by_customers: {str(ex)}')
+            raise ex
+
+    def get_sales_by_airlines(self, start_date, end_date, destination_country_id):
+        try:
+            stmt = text('select * from get_sales_by_airlines(:_start_date, :_end_date, :_destination_country_id)') \
+                .bindparams(_start_date=start_date, _end_date=end_date, _destination_country_id=destination_country_id)
+            results = self.local_session.execute(stmt).all()
+            airlines_sales = [{'airline_id': res[0],
+                               'airline_name': res[1],
+                               'count_tickets': res[2],
+                               'sum_sales': res[3]
+                        } for res in results]
+            # self.logger.log(logging.INFO, f'get_sales_by_airlines: {airlines_sales}')
+            return airlines_sales
+        except Exception as ex:
+            self.local_session.rollback()
+            self.logger.log(logging.ERROR, f'get_sales_by_airlines: {str(ex)}')
+            raise ex
+
+    def get_daily_sales_data(self, start_date, end_date, destination_country_id):
+        try:
+            stmt = text('select * from get_daily_sales_data(:_start_date, :_end_date, :_destination_country_id)') \
+                .bindparams(_start_date=start_date, _end_date=end_date, _destination_country_id=destination_country_id)
+            results = self.local_session.execute(stmt).all()
+            daily_sales = [{'result_date': res[0],
+                            'result_sales': res[1]
+                        } for res in results]
+            # self.logger.log(logging.INFO, f'get_daily_sales_data: {daily_sales}')
+            return daily_sales
+        except Exception as ex:
+            self.local_session.rollback()
+            self.logger.log(logging.ERROR, f'get_daily_sales_data: {str(ex)}')
+            raise ex
+
+    def get_capacities_util(self, start_date, end_date, destination_country_id):
+        try:
+            stmt = text('select * from get_capacities_util(:_start_date, :_end_date, :_destination_country_id)') \
+                .bindparams(_start_date=start_date, _end_date=end_date, _destination_country_id=destination_country_id)
+            results = self.local_session.execute(stmt).all()
+            utils = [{'num_seats': res[0],
+                          'remaining_tickets': res[1],
+                          'sold_tickets': res[2]
+                        } for res in results]
+            # self.logger.log(logging.INFO, f'get_purchases_by_customers: {utils}')
+            return utils
+        except Exception as ex:
+            self.local_session.rollback()
+            self.logger.log(logging.ERROR, f'get_capacities_util: {str(ex)}')
+            raise ex
+
     def get_customers_by_params(self, search):
-        stmt = text('select * from get_customers_by_params(:_search)') \
+        try:
+            stmt = text('select * from get_customers_by_params(:_search)') \
             .bindparams(_search=search)
-        results = self.local_session.execute(stmt).all()
-        customers = [Customer(
+            results = self.local_session.execute(stmt).all()
+            customers = [Customer(
                     id=res[0],
                     first_name=res[1],
                     last_name=res[2],
@@ -595,4 +776,27 @@ class FilghtRepository:
                     user_id=res[6],
                     image_url=res[7]
                     ) for res in results]
-        return customers
+            return customers
+
+        except Exception as ex:
+             self.local_session.rollback()
+             self.logger.log(logging.ERROR, f'get_customers_by_params: {str(ex)}')
+             raise ex
+
+    def get_administrators_by_params(self, search):
+        try:
+            stmt = text('select * from get_administrators_by_params(:_search)') \
+            .bindparams(_search=search)
+            results = self.local_session.execute(stmt).all()
+            administrators = [{'id': res[0],
+                               'first_name': res[1],
+                               'last_name': res[2],
+                               'email': res[3],
+                               'image_url': res[4]
+                        } for res in results]
+            return administrators
+        except Exception as ex:
+             self.local_session.rollback()
+             self.logger.log(logging.ERROR, f'get_administrators_by_params: {str(ex)}')
+             raise ex
+

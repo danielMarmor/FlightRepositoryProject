@@ -5,7 +5,16 @@ DROP FUNCTION IF EXISTS public.get_overlapped_filghts(bigint, bigint);
 CREATE OR REPLACE FUNCTION public.get_overlapped_filghts(
 	_customer_id bigint,
 	_new_flight_id bigint)
-    RETURNS TABLE(id bigint, airline_company_id bigint, origin_country_id integer, destination_country_id integer, departure_time timestamp without time zone, landing_time timestamp without time zone,  remaining_tickets integer, price numeric)
+    RETURNS TABLE(id bigint,
+				  airline_company_id bigint,
+				  origin_country_id integer,
+				  destination_country_id integer,
+				  departure_time timestamp without time zone,
+				  landing_time timestamp without time zone,
+				  remaining_tickets integer,
+				  price numeric,
+				  distance numeric,
+				  num_seats bigint)
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE

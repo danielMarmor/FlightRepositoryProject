@@ -13,6 +13,7 @@ from business.facade.customerFacade import CustomerFacade
 from business.facade.airlineFacade import AirlineFacade
 from business.facade.administratorFacade import AdministratorFacade
 from common.not_mapped.identityToken import IdentityToken
+from common.not_mapped.UserDetails import UserDetails
 import logging
 
 logger = FlightsLogger.get_instance().Logger
@@ -32,7 +33,9 @@ class AnonymousFacade(FacadeBase):
             user = self._loginService.login(username, password)
             facade = self.create_facade(user.user_role, user.username)
             token = facade.token
-            return token
+            identity = facade.get_details(token.identity_id)
+            user_details = UserDetails(token, identity)
+            return user_details
         except Exception as exc:
             self.handle_exception(Actions.LOGIN, exc)
 
@@ -87,8 +90,11 @@ class AnonymousFacade(FacadeBase):
             self._loginService.validate_new_user(user)
             self._customerService.validate_customer(customer)
             self._customerService.add_customer(customer, user)
-            token = self.login(user.username, user.password)
-            return token
+            facade = self.create_facade(user.user_role, user.username)
+            token = facade.token
+            identity = facade.get_details(token.identity_id)
+            user_details = UserDetails(token, identity)
+            return user_details
         except Exception as exc:
             self.handle_exception(Actions.ADD_CUSTOMER, exc)
 
@@ -101,8 +107,11 @@ class AnonymousFacade(FacadeBase):
             self._loginService.validate_new_user(user)
             self._airlineService.validate_airline(airline)
             self._airlineService.add_airline(airline, user)
-            token = self.login(user.username, user.password)
-            return token
+            facade = self.create_facade(user.user_role, user.username)
+            token = facade.token
+            identity = facade.get_details(token.identity_id)
+            user_details = UserDetails(token, identity)
+            return user_details
         except Exception as exc:
             self.handle_exception(Actions.ADD_AIRLINE, exc)
 
@@ -110,27 +119,26 @@ class AnonymousFacade(FacadeBase):
     def handle_exception(self, action, exception: Exception):
         # first -check basefacede(super) actions
         super().handle_exception(action, exception)
-
         # match case by anonymusfacade actions
-        if isinstance(exception, NotVaildInputException):
-            raise FlightSystemException(EMPTY_INPUT_CLIENT_MESSAGE, exception)
-
-        elif isinstance(exception, NotValidLoginException):
-            raise FlightSystemException(LOGIN_FAILED_CLIENT_MESSAGE, exception)
-
-        elif isinstance(exception, NotFoundException):
-            logger.log(logging.ERROR,
-                       f'{str(exception)}, entity={exception.entity} entity_id={exception.entity_id}')
-            raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
-
-        elif isinstance(exception, NotUniqueException):
-            logger.log(logging.ERROR,
-                f'{str(exception)}, field_name={exception.field_name} reuqested_value={exception.reuqested_value}')
-            raise FlightSystemException(NOT_UNIQUE_CLIENT_MESSAGE, exception)
-
-        else:  # PYTHON EXCEPTION (NOT CUSTOMED)-  GENERAL MESSAGE ERROR
-             logger.log(logging.ERROR, f'{str(exception)}')
-             raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
+        # if isinstance(exception, NotVaildInputException):
+        #     raise FlightSystemException(EMPTY_INPUT_CLIENT_MESSAGE, exception)
+        #
+        # elif isinstance(exception, NotValidLoginException):
+        #     raise FlightSystemException(LOGIN_FAILED_CLIENT_MESSAGE, exception)
+        #
+        # elif isinstance(exception, NotFoundException):
+        #     logger.log(logging.ERROR,
+        #                f'{str(exception)}, entity={exception.entity} entity_id={exception.entity_id}')
+        #     raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
+        #
+        # elif isinstance(exception, NotUniqueException):
+        #     logger.log(logging.ERROR,
+        #         f'{str(exception)}, field_name={exception.field_name} reuqested_value={exception.reuqested_value}')
+        #     raise FlightSystemException(NOT_UNIQUE_CLIENT_MESSAGE, exception)
+        #
+        # else:  # PYTHON EXCEPTION (NOT CUSTOMED)-  GENERAL MESSAGE ERROR
+        #      logger.log(logging.ERROR, f'{str(exception)}')
+        #      raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
 
     def get_all_customers_users(self):
         try:

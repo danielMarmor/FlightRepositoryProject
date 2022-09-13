@@ -8,9 +8,9 @@ from common.entities.UserRole import UserRole
 class User(Base):
     __tablename__ = 'users'
 
-    USERNAME_MAX = 20
+    USERNAME_MAX = 40
     PASSWORD_MAX = 20
-    EMAIL_MAX = 50
+    EMAIL_MAX = 100
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     username = Column(String(USERNAME_MAX), unique=True, nullable=False)

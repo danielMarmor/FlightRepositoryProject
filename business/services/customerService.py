@@ -103,7 +103,6 @@ class CustomerService:
 
     def get_all_customers(self):
         customers = self._repository.get_all(Customer)
-        return customers
 
     def get_customer_by_id(self, customer_id):
         customer = self._repository.get_by_id(Customer, customer_id)
@@ -125,4 +124,10 @@ class CustomerService:
         if search:
             search = search.strip()
         customers = self._repository.get_customers_by_params(search)
+        return customers
+
+    def get_customers_bussines_data(self, search: str):
+        if search:
+            search = search.strip()
+        customers = self._repository.get_customers_bussines_data(search)
         return customers

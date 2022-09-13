@@ -11,6 +11,7 @@ from common.not_mapped.identityToken import IdentityToken
 from common.exceptions.invalidTokenException import InvalidTokenException
 from business.services.airlineService import AirlineService
 from common.exceptions.notValidFlightException import NotValidFlightException
+from common.not_mapped.UserDetails import UserDetails
 import logging
 
 logger = FlightsLogger.get_instance().Logger
@@ -25,7 +26,12 @@ class AirlineFacade(FacadeBase):
     def token(self):
         return self._token
 
+    def get_details(self, identity_id):
+        airline = self.get_airline_by_id(identity_id)
+        return airline
+
     def validate_token(self, airline_id, action_id):
+        pass
         airline = self.get_airline_by_id(airline_id)
         if airline is None:
             raise NotFoundException('Airline Not Found', Entity.AIRLINE_COMPANY, airline_id)
@@ -68,7 +74,10 @@ class AirlineFacade(FacadeBase):
             self._airlineService.update_airline(user_id, user, airline_id, airline)
             upd_user = self._loginService.login(user.username, user.password)
             self._token = IdentityToken(upd_user.username, upd_user.user_role, airline_id)
-            return self.token
+            token =  self.token
+            identity = self.get_details(token.identity_id)
+            user_details = UserDetails(token, identity)
+            return user_details
         except Exception as exc:
             self.handle_exception(Actions.UPDATE_AIRLINE, exc)
 
@@ -101,29 +110,33 @@ class AirlineFacade(FacadeBase):
         except Exception as exc:
             self.handle_exception(Actions.REMOVE_FLIGHT, exc)
 
+    def get_tickets_by_flight(self, flight_id):
+        tickets = self._ordersService.get_tickets_by_flight(flight_id)
+        return tickets
+
     def handle_exception(self, action, exception: Exception):
         super().handle_exception(action, exception)
-        if isinstance(exception, InvalidTokenException):
-            logger.log(logging.ERROR,
-                    f'{str(exception)}, action={exception.action}, token={exception.token},'
-                    f' field_name={exception.field_name}, field_value={exception.field_value}')
-            raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
-        elif isinstance(exception, NotVaildInputException):
-            logger.log(logging.ERROR,
-                    f'{str(exception)}, cause={exception.cause}, field_name={exception.field_name}')
-            raise FlightSystemException(EMPTY_INPUT_CLIENT_MESSAGE, exception)
-        elif isinstance(exception, NotUniqueException):
-            logger.log(logging.ERROR,
-                    f'{str(exception)}, field_name={exception.field_name} reuqested_value={exception.reuqested_value}')
-            raise FlightSystemException(NOT_UNIQUE_CLIENT_MESSAGE, exception)
-        elif isinstance(exception, NotFoundException):
-            logger.log(logging.ERROR,
-                    f'{str(exception)}, entity={exception.entity} entity_id={exception.entity_id}')
-            raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
-        elif isinstance(exception, NotValidFlightException):
-            logger.log(logging.ERROR,
-                    f'{str(exception)}, reason={exception.cause}')
-            raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
-        else:  # PYTHON EXCEPTION - ALSO GENERAL MESSAGE ERROR
-            logger.log(logging.ERROR, f'{str(exception)}')
-            raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
+        # if isinstance(exception, InvalidTokenException):
+        #     logger.log(logging.ERROR,
+        #             f'{str(exception)}, action={exception.action}, token={exception.token},'
+        #             f' field_name={exception.field_name}, field_value={exception.field_value}')
+        #     raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
+        # elif isinstance(exception, NotVaildInputException):
+        #     logger.log(logging.ERROR,
+        #             f'{str(exception)}, cause={exception.cause}, field_name={exception.field_name}')
+        #     raise FlightSystemException(EMPTY_INPUT_CLIENT_MESSAGE, exception)
+        # elif isinstance(exception, NotUniqueException):
+        #     logger.log(logging.ERROR,
+        #             f'{str(exception)}, field_name={exception.field_name} reuqested_value={exception.reuqested_value}')
+        #     raise FlightSystemException(NOT_UNIQUE_CLIENT_MESSAGE, exception)
+        # elif isinstance(exception, NotFoundException):
+        #     logger.log(logging.ERROR,
+        #             f'{str(exception)}, entity={exception.entity} entity_id={exception.entity_id}')
+        #     raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
+        # elif isinstance(exception, NotValidFlightException):
+        #     logger.log(logging.ERROR,
+        #             f'{str(exception)}, reason={exception.cause}')
+        #     raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)
+        # else:  # PYTHON EXCEPTION - ALSO GENERAL MESSAGE ERROR
+        #     logger.log(logging.ERROR, f'{str(exception)}')
+        #     raise FlightSystemException(GENERAL_CLIENT_ERROR_MESSAGE, exception)

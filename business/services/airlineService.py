@@ -122,6 +122,10 @@ class AirlineService:
         empty_dest_country_id = not ValidationService.validate_not_null(flight.destination_country_id)
         if empty_dest_country_id:
             raise NotVaildInputException('Detination Country_id Null!', Reason.EMPTY, Field.FLIGHT_DEST_COUNTRY_ID)
+        # not positive distance
+        if flight.distance <= 0:
+            raise NotValidFlightException('Distance must be grater than 0',
+                                            Reason.DISTANCE_INVALID)
         empty_departure_date = not ValidationService.validate_not_null(flight.departure_time)
         if empty_departure_date:
             raise NotVaildInputException('departure_time Null!', Reason.EMPTY, Field.FLIGHT_DEPARTURE_DATE)
@@ -139,9 +143,18 @@ class AirlineService:
             raise NotValidFlightException('Destination Country Same as Origin Country',
                                               Reason.SAME_COUNTRY_FLIGHT)
 
+        # not positive numseats
+        if flight.num_seats <= 0:
+             raise NotValidFlightException('Num seats must be grater than 0',
+                                            Reason.NUM_SEATS_INVALID)
+
         # not positive tickets balance
         if flight.remaining_tickets <= 0:
             raise NotValidFlightException('Remainig Tickets must be grater than 0',
+                                          Reason.REMAING_TICKETS_INVALID)
+        # remaing tickets is greater than numseats
+        if flight.remaining_tickets > flight.num_seats:
+            raise NotValidFlightException('Remainig Tickets must not be greater than number of seats',
                                           Reason.REMAING_TICKETS_INVALID)
 
     def add_airline(self, airline, user):
@@ -159,6 +172,7 @@ class AirlineService:
     def add_fligth(self, flight):
         self._repository.add(flight)
 
+
     def update_fligth(self, flight_id, flight):
         update_data_filter = {
             'airline_company_id': flight.airline_company_id,
@@ -166,7 +180,11 @@ class AirlineService:
             'destination_country_id': flight.destination_country_id,
             'departure_time': flight.departure_time,
             'landing_time': flight.landing_time,
-            'remaining_tickets': flight.remaining_tickets
+            'price': flight.price,
+            'remaining_tickets': flight.remaining_tickets,
+            'distance': flight.distance,
+            'num_seats': flight.num_seats
+
         }
         self._repository.update(Flight, 'id', flight_id, update_data_filter)
 
@@ -218,6 +236,9 @@ class AirlineService:
     def add_administrator(self, administrator, user):
         self._repository.add_administrator(administrator, user)
 
+    def update_administrator(self, user_id, user, administrator_id, administrator):
+        self._repository.update_administrator(user_id, user, administrator_id, administrator)
+
     def get_all_countries(self):
         countries = self._repository.get_all(Country)
         return countries
@@ -233,3 +254,35 @@ class AirlineService:
         country_cond = (lambda query: query.filter(Country.name == name))
         countries = self._repository.get_all_by_condition(Country, country_cond)
         return countries
+
+    def get_airlines_bussines_data(self, search: str):
+        if search:
+            search = search.strip()
+        airlines = self._repository.get_airlines_bussines_data(search)
+        return airlines
+
+    def get_administrators_by_params(self, search: str):
+        if search:
+            search = search.strip()
+        airlines = self._repository.get_administrators_by_params(search)
+        return airlines
+
+    def get_daily_sales_data(self, start_date, end_date, destination_country_id):
+        daily_sales = self._repository.get_daily_sales_data(start_date, end_date, destination_country_id)
+        return daily_sales
+
+    def get_sales_by_airlines(self, start_date, end_date, destination_country_id):
+        sales = self._repository.get_sales_by_airlines(start_date, end_date, destination_country_id)
+        return sales
+
+    def get_purchases_by_customers(self, start_date, end_date, destination_country_id):
+        purchases = self._repository.get_purchases_by_customers(start_date, end_date, destination_country_id)
+        return purchases
+
+    def get_count_flights(self, start_date, end_date, destination_country_id):
+        count_flights = self._repository.get_count_flights(start_date, end_date, destination_country_id)
+        return count_flights
+
+    def get_capacities_util(self, start_date, end_date, destination_country_id):
+        utilization = self._repository.get_capacities_util(start_date, end_date, destination_country_id)
+        return utilization

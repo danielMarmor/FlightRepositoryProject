@@ -17,10 +17,12 @@ MinimumDate = datetime.datetime(1, 1, 1)
 MaximumDate = datetime.datetime(9999, 12, 31)
 
 # messages
-GENERAL_CLIENT_ERROR_MESSAGE = 'We couldnt complete your request. please contact support'
-NOT_UNIQUE_CLIENT_MESSAGE = 'One of the details you gave us allready exists in system.' \
-                            ' check your data, or consult our support'
-EMPTY_INPUT_CLIENT_MESSAGE = 'Please type valid inputs. one of your inputs is missing'
-LOGIN_FAILED_CLIENT_MESSAGE= 'User Name or password are inncerect'
-
+GENERAL_CLIENT_ERROR_MESSAGE = 'We couldnt complete your request. Please contact support'
+NOT_UNIQUE_CLIENT_MESSAGE = 'One of the details you gave us allready exists in the system.' \
+                            ' Check your data, or consult our support'
+EMPTY_INPUT_CLIENT_MESSAGE = 'Please type valid inputs. One of your inputs is missing'
+LOGIN_FAILED_CLIENT_MESSAGE = 'User name or password are incorrect !'
+NOT_AUTHORIZED_MESSAGE = 'You Are Not Authorized To Commit This Operation. Please contact support'
+RESOURCE_NOT_FOUND_MESSAGE = 'One of the resources you are trying to acsess not exists or not availiable. '\
+    'Please contact support'
 SCRIPTS_DELIMITER = '$EXCE SCRIPT'

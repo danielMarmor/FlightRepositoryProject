@@ -1,7 +1,14 @@
+-- FUNCTION: public.get_administrator_by_username(text)
+
 DROP FUNCTION IF EXISTS public.get_administrator_by_username(text);
+
 CREATE OR REPLACE FUNCTION public.get_administrator_by_username(
 	_username text)
-    RETURNS TABLE(id integer, first_name character varying,  last_name character varying, user_id bigint)
+    RETURNS TABLE(id integer,
+				  first_name character varying,
+				  last_name character varying, 
+				  user_id bigint,
+				  image_url character varying) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE

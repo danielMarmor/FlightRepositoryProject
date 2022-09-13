@@ -68,6 +68,8 @@ class ManageConsumners:
             try:
                 response = self.invoke_requests.invoke(facade_name, action_id, data)
                 system_exeption = None
+            # exception during  the invoke itself -
+            # will catogorized as valid reponse (200) with action message to the user
             except Exception as exc:
                 response = None
                 system_exeption = exc
@@ -79,6 +81,7 @@ class ManageConsumners:
                             }
             self.async_response(self.publish_response, response_body=response_body)
             # CALLBACK WRITE
+        # exception during consuming process  -will categorized as server internal errors 501
         except Exception as exc:
             self.handle_unspecified_exc(exc, correlation_id)
 
@@ -98,6 +101,8 @@ class ManageConsumners:
             try:
                 response = self.invoke_requests.invoke(facade_name, action_id, data)
                 system_exeption = None
+            # exception during  the invoke itself -
+            # will catogorized as valid reponse (200) with action message to the user
             except Exception as exc:
                 response = None
                 system_exeption = exc
@@ -108,6 +113,7 @@ class ManageConsumners:
                             'exception': serialized_exception
                             }
             self.async_response(self.publish_response, response_body=response_body)
+        # exception during consuming process  -will categorized as server internal errors 501
         except Exception as exc:
             self.handle_unspecified_exc(exc, correlation_id)
 
@@ -121,6 +127,7 @@ class ManageConsumners:
             self.channel.basic_publish(exchange='',
                                        routing_key=self.RENPONSE_QUEUE_NAME,
                                        body=message)
+        # exception during serializing - will categorized as server internal error 501
         except Exception as exc:
             correlation_id = response_body['correlation_id']
             self.handle_unspecified_exc(exc, correlation_id)

@@ -59,7 +59,10 @@ class Customer(Base):
                 'phone_number': self.phone_number,
                 'credit_card_number': self.credit_card_number,
                 'user_id': self.user_id,
-                'image_url': self.image_url
+                'image_url': self.image_url,
+                'username' : self.user.username,
+                'password' :self.user.password,
+                'email' : self.user.email
                 }
         return data
 

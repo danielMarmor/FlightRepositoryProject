@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION public.get_flights_by_parameters(
     RETURNS TABLE(flight_id bigint,
 				  airline_company_id bigint,
 				  airline_company_name character varying,
-				  airline_company_img_url character varying,
+				  airline_iata character varying,
 				  origin_country_id integer,
 				  origin_country_name character varying,
 				  origin_country_airport_abbr character varying,
@@ -19,8 +19,9 @@ CREATE OR REPLACE FUNCTION public.get_flights_by_parameters(
 				  dest_country_airport_abbr character varying,
 				  departure_time timestamp without time zone,
 				  landing_time timestamp without time zone,
-				  price numeric(18, 2),
-				  remaining_tickets integer)
+				  price numeric,
+				  remaining_tickets integer,
+				  num_seats bigint)
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -37,7 +38,7 @@ AS $BODY$
 			fli.id flight_id,
 			fli.airline_company_id airline_company_id,
 			ac.name airline_company_name,
-			ac.image_url airline_company_img_url,
+			ac.iata airline_iata,
 			fli.origin_country_id origin_country_id,
 			co_orig.name origin_country_name,
 			co_orig.airport_abbr origin_country_airport_abbr,
@@ -47,7 +48,8 @@ AS $BODY$
 			fli.departure_time departure_time,
 			fli.landing_time landing_time,
 			fli.price price,
-			fli.remaining_tickets remaining_tickets
+			fli.remaining_tickets remaining_tickets,
+			fli.num_seats
 			from
 			flights fli
 			join airine_companies ac on fli.airline_company_id =ac.id
@@ -59,7 +61,12 @@ AS $BODY$
 			and ((_start_date is null and fli.departure_time >= MIN_DATE)
 			or fli.departure_time >= _start_date)
 			and ((_end_date is null and fli.landing_time <= MAX_DATE)
-			or fli.landing_time <=_end_date);
+			or fli.landing_time <=_end_date)
+			and fli.departure_time >= to_date('24/08/2022', 'DD/MM/YYYY')
+			and co_orig.airport_abbr <> 'DEF'
+			and co_dest.airport_abbr <> 'DEF'
+			and ac.iata is not null
+			order by fli.departure_time;
 		end;
 
 $BODY$;
