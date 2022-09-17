@@ -1,6 +1,6 @@
 -- FUNCTION: public.get_airlines_bussines_data(character varying)
 
-DROP FUNCTION IF EXISTS public.get_airlines_bussines_data(character varying);
+-- DROP FUNCTION IF EXISTS public.get_airlines_bussines_data(character varying);
 
 CREATE OR REPLACE FUNCTION public.get_airlines_bussines_data(
 	_search character varying)
@@ -39,7 +39,7 @@ AS $BODY$
 			left join flights fli on airline.id = fli.airline_company_id
 			left join tickets tick on coalesce(fli.id, 0) = tick.flight_id
 			where
-			(_search is null or airline.name like ('%' || _search || '%'))
+			(_search is null or lower(airline.name) like ('%' || lower(_search) || '%'))
 		 	group by
 		 	airline.id,
 			airline.country_id,

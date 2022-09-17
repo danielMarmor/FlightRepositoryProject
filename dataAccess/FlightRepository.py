@@ -233,7 +233,13 @@ class FilghtRepository:
             customer_tickets_cond = (lambda query: query.filter(Ticket.customer_id == customer_id))
             customer_tickets_query = self.local_session.query(Ticket)
             tickets_entries = customer_tickets_cond(customer_tickets_query)
-            tickets_entries.delete(synchronize_session=False)
+            for ticket in tickets_entries:
+                flight = self.get_by_id(Flight, ticket.flight_id)
+                ticket_entry = self.local_session.query(Ticket).filter(getattr(Ticket, 'id') == ticket.id)
+                flight_entry = self.local_session.query(Flight).filter(getattr(Flight, 'id') == flight.id)
+                updated_data_filter = {'remaining_tickets': flight.remaining_tickets + 1}
+                ticket_entry.delete(synchronize_session=False)
+                flight_entry.update(updated_data_filter)
             # customer
             cust_entry = self.local_session.query(Customer).filter(getattr(Customer, 'id') == customer_id)
             cust_entry.delete(synchronize_session=False)
@@ -262,14 +268,14 @@ class FilghtRepository:
     def remove_administrator(self, administrator_id):
         # airline flights
         try:
-            stmt = text('CALL remove_administrator(:_administrator_id)') \
+            stmt = text('CALL remove_admin(:_administrator_id)') \
                 .bindparams(_administrator_id=administrator_id)
             self.local_session.execute(stmt)
             self.local_session.commit()
-            self.logger.log(logging.INFO, f'remove_administrator')
+            self.logger.log(logging.INFO, f'remove_admin')
         except Exception as ex:
             self.local_session.rollback()
-            self.logger.log(logging.ERROR, f'remove_administrator: {str(ex)}')
+            self.logger.log(logging.ERROR, f'remove_admin: {str(ex)}')
             raise ex
 
     def add_ticket(self, ticket: Ticket, remaining_tickets):

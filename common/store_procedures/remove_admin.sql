@@ -1,6 +1,8 @@
-DROP PROCEDURE IF EXISTS public.remove_administrator(bigint);
+-- PROCEDURE: public.remove_admin(bigint)
 
-CREATE OR REPLACE PROCEDURE public.remove_administrator(
+DROP PROCEDURE IF EXISTS public.remove_admin(bigint);
+
+CREATE OR REPLACE PROCEDURE public.remove_admin(
 	IN _administrator_id bigint)
 LANGUAGE 'plpgsql'
 AS $BODY$

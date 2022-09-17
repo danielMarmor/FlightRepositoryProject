@@ -32,8 +32,8 @@ AS $BODY$
 			where
 			(_search is null
 			or
-			((cust.first_name || ' ' || cust.last_name) like ('%' || _search || '%')
-		     or (cust.last_name || ' ' || cust.first_name) like ('%' || _search || '%')))
+			((lower(cust.first_name) || ' ' || lower(cust.last_name)) like ('%' || lower(_search) || '%')
+		     or ((lower(cust.last_name) || ' ' || lower(cust.first_name)) like ('%' || lower(_search) || '%'))))
 			group by
 		 	cust.id,
 		 	cust.first_name,

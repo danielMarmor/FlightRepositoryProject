@@ -21,7 +21,7 @@ def load_db_scripts():
         os.path.join(ROOT_DIR, 'common/store_procedures/get_flights_by_customer.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/remove_airline.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/remove_customer.sql'),
-        os.path.join(ROOT_DIR, 'common/store_procedures/remove_administrator.sql'),
+        os.path.join(ROOT_DIR, 'common/store_procedures/remove_admin.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/get_customers_by_params.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/get_customers_bussines_data.sql'),
         os.path.join(ROOT_DIR, 'common/store_procedures/get_airlines_bussines_data.sql'),
